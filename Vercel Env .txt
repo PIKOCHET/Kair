@@ -1,0 +1,4 @@
+VITE_SUPABASE_URL       = https://sdlgiymtvxeayadjjnsj.supabase.co
+VITE_SUPABASE_ANON_KEY  = sb_publishable_Y2UakGOp2952JrXwxumySA_AN99cAAD
+VITE_API_URL            = https://kair-production.up.railway.app
+VITE_RAZORPAY_KEY_ID    = rzp_test_dummy123456789
