@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useState }          from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage    from './pages/LoginPage';
 import CheckoutPage from './pages/CheckoutPage';
