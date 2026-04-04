@@ -8,4 +8,3 @@ SUPABASE_URL = https://sdlgiymtvxeayadjjnsj.supabase.co
 
 PUBLISHABLE KEY (for frontend .env files) = sb_publishable_Y2UakGOp2952JrXwxumySA_AN99cAAD
 
-SECRET KEY (for backend only) = sb_secret_4CarbKn0hebRt88mNhoQzA_kC5W7O8u
