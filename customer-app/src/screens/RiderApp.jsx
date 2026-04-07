@@ -89,7 +89,7 @@ function ItemEntry({ order, onDone, onBack }) {
         <button onClick={onBack} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>←</button>
         <div>
           <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Enter items — {order.order_number}</div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>{order.customer?.full_name} · {order.address?.area}</div>
+          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>{order.customer?.full_name} · {order.address?.area || order.address?.flat_no || 'Pune'}</div>
         </div>
       </div>
 
@@ -151,44 +151,21 @@ function ItemEntry({ order, onDone, onBack }) {
         ))}
       </div>
 
-      {/* Bottom confirm bar */}
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#fff', borderTop: `1px solid ${C.border}`, padding: '12px 16px', boxShadow: '0 -4px 20px rgba(0,0,0,0.08)' }}>
-        {error && <p style={{ color: '#D32F2F', fontSize: '12px', marginBottom: '8px', textAlign: 'center' }}>{error}</p>}
-
-        {/* Summary row */}
-        {items.length > 0 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', padding: '8px 12px', background: C.linen, borderRadius: '10px' }}>
-            <span style={{ fontSize: '12px', color: C.stone }}>
-              {totalQty} item{totalQty > 1 ? 's' : ''}{etaDate ? ` · Est. ${etaDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : ''}
-            </span>
-            <span style={{ fontSize: '14px', fontWeight: 700, color: C.navy }}>{fmt.rupees(totalPaise)}</span>
-          </div>
-        )}
-
-        <button
-          onClick={save}
-          disabled={saving || items.length === 0}
-          style={{
-            width: '100%', padding: '15px',
-            background: items.length === 0 ? '#ccc' : saving ? C.stone : C.saffron,
-            color: items.length === 0 ? C.stone : '#fff',
-            border: 'none', borderRadius: '12px',
-            fontSize: '15px', fontWeight: 700,
-            cursor: items.length === 0 ? 'not-allowed' : 'pointer',
-            fontFamily: 'DM Sans, sans-serif',
-            transition: 'all 0.2s',
-          }}>
-          {saving
-            ? 'Saving & notifying customer...'
-            : items.length === 0
-              ? 'Add items above to confirm'
-              : `✅ Confirm ${totalQty} item${totalQty > 1 ? 's' : ''} · ${fmt.rupees(totalPaise)}`
-          }
-        </button>
-        <p style={{ textAlign: 'center', fontSize: '10px', color: C.stone, marginTop: '6px' }}>
-          Customer will be notified with full item list + delivery date
-        </p>
-      </div>
+ {/* Bottom confirm bar */}
+<div style={{ position:'fixed', bottom:0, left:0, right:0, maxWidth:'480px', margin:'0 auto', background:'#fff', borderTop:`1px solid ${C.border}`, padding:'10px 14px 12px', boxShadow:'0 -4px 20px rgba(0,0,0,0.08)' }}>
+  {error && <p style={{ color:'#D32F2F', fontSize:'11px', marginBottom:'6px', textAlign:'center' }}>{error}</p>}
+  {items.length > 0 && (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px', padding:'6px 10px', background:C.linen, borderRadius:'8px' }}>
+      <span style={{ fontSize:'11px', color:C.stone }}>{totalQty} item{totalQty>1?'s':''} · {etaDate ? `Est. ${etaDate.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}` : ''}</span>
+      <span style={{ fontSize:'13px', fontWeight:700, color:C.navy }}>{fmt.rupees(totalPaise)}</span>
+    </div>
+  )}
+  <button onClick={save} disabled={saving || items.length===0}
+    style={{ width:'100%', padding:'13px', background:items.length===0?'#E0E0E0':saving?C.stone:C.saffron, color:items.length===0?C.stone:'#fff', border:'none', borderRadius:'10px', fontSize:'13px', fontWeight:700, cursor:items.length===0?'not-allowed':'pointer', fontFamily:'DM Sans, sans-serif' }}>
+    {saving ? '⏳ Saving...' : items.length===0 ? 'Add items above' : `✅ Confirm ${totalQty} item${totalQty>1?'s':''} · ${fmt.rupees(totalPaise)}`}
+  </button>
+  <p style={{ textAlign:'center', fontSize:'9px', color:C.stone, marginTop:'5px' }}>Customer notified with item list + delivery date</p>
+</div>
     </div>
   );
 }
@@ -219,7 +196,7 @@ export default function RiderApp() {
       : ['delivered', 'cancelled'];
 
     let q = supabase.from('orders')
-      .select('*, address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), customer:profiles!orders_customer_id_fkey(full_name,phone)')
+      .select('*, customer_id, address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), customer:profiles!orders_customer_id_fkey(full_name,phone)')
       .in('status', statuses)
       .order('created_at', { ascending: false });
 
