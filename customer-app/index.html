@@ -14,7 +14,15 @@
     <style>
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
       html, body { height: 100%; background: #FAF8F4; -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; }
-      #root { height: 100%; }
+      #root {
+		  max-width: 480px;
+		  margin: 0 auto;
+		  min-height: 100vh;
+		  box-shadow: 0 0 40px rgba(0,0,0,0.08);
+		}
+		body {
+		  background: #E8E4DD;
+		}
     </style>
   </head>
   <body>
