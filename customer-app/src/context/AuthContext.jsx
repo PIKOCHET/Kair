@@ -9,18 +9,16 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
-      setLoading(false);
+      else setLoading(false);
     });
 
-    // Listen for auth changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) fetchProfile(session.user.id);
-      else setProfile(null);
+      else { setProfile(null); setLoading(false); }
     });
 
     return () => listener.subscription.unsubscribe();
@@ -33,39 +31,16 @@ export function AuthProvider({ children }) {
       .eq('id', userId)
       .single();
     setProfile(data);
+    setLoading(false);
   }
 
-  // ── Step 1: Send OTP to Indian mobile number
-  async function sendOtp(phone) {
-    // Supabase expects E.164 format: +919876543210
-    const formatted = phone.startsWith('+') ? phone : `+91${phone.replace(/\s/g, '')}`;
-
-    const { error } = await supabase.auth.signInWithOtp({ phone: formatted });
-    if (error) throw error;
-    return formatted;
-  }
-
-  // ── Step 2: Verify the OTP token
-  async function verifyOtp(phone, token) {
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
-    });
-    if (error) throw error;
-    return data;
-  }
-
-  // ── Update profile (name, language preference, etc.)
   async function updateProfile(updates) {
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('profiles')
       .update(updates)
       .eq('id', user.id)
       .select()
       .single();
-
-    if (error) throw error;
     setProfile(data);
     return data;
   }
@@ -79,8 +54,10 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, profile, loading,
-      sendOtp, verifyOtp, updateProfile, signOut,
       isLoggedIn: !!user,
+      role: profile?.role || 'customer',
+      updateProfile,
+      signOut,
     }}>
       {children}
     </AuthContext.Provider>
