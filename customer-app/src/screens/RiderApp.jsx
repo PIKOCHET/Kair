@@ -175,12 +175,24 @@ export default function RiderApp() {
     });
   }
 
-  async function updateStatus(orderId, nextStatus, assignSelf) {
-    const body = { status:nextStatus };
-    if (assignSelf) body.rider_id = user.id;
-    const res = await fetch(`${API}/api/orders/${orderId}/status`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
-    if (res.ok) { showToast('Updated ✓'); fetchOrders(); }
+ async function updateStatus(orderId, status, assignSelf) {
+  const update = { status };
+  if (assignSelf) update.rider_id = profile.id;
+  if (status === 'picked_up') update.picked_up_at = new Date().toISOString();
+  if (status === 'delivered') update.delivered_at = new Date().toISOString();
+
+  const { error } = await supabase
+    .from('orders')
+    .update(update)
+    .eq('id', orderId);
+
+  if (error) {
+    showToast('Error: ' + error.message);
+  } else {
+    showToast('Status updated ✓');
+    fetchOrders();
   }
+}
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
 
