@@ -418,23 +418,164 @@ function OrdersView({ onBack }) {
   );
 }
 
+// ── ACCOUNT ───────────────────────────────────────────────
+function AccountView({ onBack }) {
+  const { user, profile, signOut } = useAuth();
+  const [addresses,   setAddresses]   = useState([]);
+  const [addingNew,   setAddingNew]   = useState(false);
+  const [flat,        setFlat]        = useState('');
+  const [area,        setArea]        = useState('');
+  const [landmark,    setLandmark]    = useState('');
+  const [saving,      setSaving]      = useState(false);
+  const [error,       setError]       = useState('');
+
+  useEffect(() => { fetchAddresses(); }, []);
+
+  async function fetchAddresses() {
+    const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending:false });
+    setAddresses(data || []);
+  }
+
+  async function addAddress() {
+    if (!area.trim()) { setError('Please enter your area'); return; }
+    setSaving(true); setError('');
+    const { error: e } = await supabase.from('addresses')
+      .insert({ user_id:user.id, flat_no:flat, area, landmark, city:'Pune', is_default: addresses.length === 0 });
+    setSaving(false);
+    if (e) { setError(e.message); return; }
+    setFlat(''); setArea(''); setLandmark(''); setAddingNew(false);
+    fetchAddresses();
+  }
+
+  async function setDefault(id) {
+    await supabase.from('addresses').update({ is_default:false }).eq('user_id', user.id);
+    await supabase.from('addresses').update({ is_default:true  }).eq('id', id);
+    fetchAddresses();
+  }
+
+  async function deleteAddress(id) {
+    await supabase.from('addresses').delete().eq('id', id);
+    fetchAddresses();
+  }
+
+  return (
+    <div style={{ background:C.cream, minHeight:'100vh', paddingBottom:'80px' }}>
+      {/* Header */}
+      <div style={{ background:C.navy, padding:'14px 16px 20px' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px' }}>
+          <button onClick={onBack} style={{ width:'30px', height:'30px', borderRadius:'50%', border:'1px solid rgba(255,255,255,0.2)', background:'transparent', cursor:'pointer', fontSize:'16px', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>←</button>
+          <span style={{ fontSize:'15px', fontWeight:700, color:'#fff' }}>Account</span>
+        </div>
+        {/* Avatar + name */}
+        <div style={{ display:'flex', alignItems:'center', gap:'14px' }}>
+          <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:C.saffron, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', flexShrink:0 }}>
+            {profile?.full_name?.charAt(0)?.toUpperCase() || '👤'}
+          </div>
+          <div>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:'#fff', fontWeight:400 }}>{profile?.full_name || '—'}</div>
+            <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.5)', marginTop:'2px' }}>{user?.email}</div>
+            {profile?.phone && <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.5)' }}>{profile.phone}</div>}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding:'16px' }}>
+        {/* Saved addresses */}
+        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'12px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
+            <div style={{ fontSize:'13px', fontWeight:700, color:C.navy }}>📍 Saved addresses</div>
+            {!addingNew && (
+              <button onClick={() => setAddingNew(true)}
+                style={{ fontSize:'11px', fontWeight:700, color:C.saffron, background:C.saffronLight, border:'none', borderRadius:'8px', padding:'4px 10px', cursor:'pointer' }}>
+                + Add new
+              </button>
+            )}
+          </div>
+
+          {addresses.length === 0 && !addingNew && (
+            <div style={{ textAlign:'center', padding:'20px', color:C.stone, fontSize:'12px' }}>No saved addresses yet</div>
+          )}
+
+          {addresses.map(addr => (
+            <div key={addr.id} style={{ borderRadius:'10px', border:`1.5px solid ${addr.is_default?C.saffron:C.border}`, padding:'10px 12px', marginBottom:'8px', background:addr.is_default?'#FFF8F5':'#fff' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start' }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:'12px', fontWeight:600, color:C.navy }}>{addr.flat_no} {addr.area}</div>
+                  {addr.landmark && <div style={{ fontSize:'10px', color:C.stone }}>Near {addr.landmark}</div>}
+                  <div style={{ fontSize:'10px', color:C.stone }}>{addr.city}</div>
+                  {addr.is_default && <span style={{ fontSize:'9px', fontWeight:700, color:C.saffron, background:C.saffronLight, padding:'2px 7px', borderRadius:'6px', display:'inline-block', marginTop:'4px' }}>Default</span>}
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:'4px', alignItems:'flex-end', flexShrink:0 }}>
+                  {!addr.is_default && (
+                    <button onClick={() => setDefault(addr.id)}
+                      style={{ fontSize:'10px', color:C.info, background:C.infoBg, border:'none', borderRadius:'6px', padding:'3px 8px', cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                      Set default
+                    </button>
+                  )}
+                  <button onClick={() => deleteAddress(addr.id)}
+                    style={{ fontSize:'10px', color:C.danger, background:C.dangerBg, border:'none', borderRadius:'6px', padding:'3px 8px', cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {addingNew && (
+            <div style={{ marginTop:'8px', borderTop:`1px solid ${C.border}`, paddingTop:'12px' }}>
+              <div style={{ fontSize:'11px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>New address</div>
+              {[['Flat / Building','flat',flat,setFlat,'B-204, Sunrise Society'],['Area / Locality *','area',area,setArea,'Koregaon Park'],['Landmark','landmark',landmark,setLandmark,'Near D-Mart']].map(([lbl,key,val,setter,ph]) => (
+                <div key={key} style={{ marginBottom:'8px' }}>
+                  <label style={{ display:'block', fontSize:'10px', fontWeight:600, color:C.stone, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'4px' }}>{lbl}</label>
+                  <input value={val} onChange={e => setter(e.target.value)} placeholder={ph}
+                    style={{ width:'100%', padding:'10px 12px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box' }} />
+                </div>
+              ))}
+              {error && <p style={{ color:C.danger, fontSize:'11px', marginBottom:'8px' }}>{error}</p>}
+              <div style={{ display:'flex', gap:'8px' }}>
+                <button onClick={() => { setAddingNew(false); setError(''); setFlat(''); setArea(''); setLandmark(''); }}
+                  style={{ flex:1, padding:'10px', border:`1px solid ${C.border}`, borderRadius:'8px', background:'#fff', fontSize:'12px', fontWeight:600, color:C.stone, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                  Cancel
+                </button>
+                <button onClick={addAddress} disabled={saving}
+                  style={{ flex:1, padding:'10px', border:'none', borderRadius:'8px', background:C.saffron, fontSize:'12px', fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                  {saving ? 'Saving…' : 'Save address'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Sign out — fixed to bottom */}
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, padding:'12px 16px', background:C.cream, borderTop:`1px solid ${C.border}`, maxWidth:'480px', margin:'0 auto', boxSizing:'border-box' }}>
+        <button onClick={signOut}
+          style={{ width:'100%', padding:'14px', border:`1.5px solid ${C.danger}`, borderRadius:'12px', background:'#fff', fontSize:'14px', fontWeight:700, color:C.danger, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+          Sign out
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── CUSTOMER APP (root view with tabs) ────────────────────
 export default function CustomerApp() {
-  const { profile, signOut } = useAuth();
-  const [view,       setView]       = useState('home'); // home | confirm | confirmed | orders
+  const { profile } = useAuth();
+  const [view,       setView]       = useState('home'); // home | confirm | confirmed | orders | account
   const [pickupType, setPickupType] = useState('standard');
   const [confirmedOrder, setConfirmedOrder] = useState(null);
 
   if (view === 'confirm') return <ConfirmView pickupType={pickupType} onConfirmed={order => { setConfirmedOrder(order); setView('confirmed'); }} onBack={() => setView('home')} />;
   if (view === 'confirmed') return <ConfirmedView order={confirmedOrder} onTrack={() => setView('orders')} />;
   if (view === 'orders') return <OrdersView onBack={() => setView('home')} />;
+  if (view === 'account') return <AccountView onBack={() => setView('home')} />;
 
   return (
     <div style={{ position:'relative' }}>
       <HomeView profile={profile} onPickup={type => { setPickupType(type); setView('confirm'); }} onViewOrders={() => setView('orders')} />
       {/* Bottom nav */}
       <div style={{ position:'fixed', bottom:0, left:0, right:0, background:'#fff', borderTop:`1px solid ${C.border}`, display:'flex', zIndex:100, boxShadow:'0 -4px 20px rgba(0,0,0,0.06)', maxWidth:'480px', margin:'0 auto' }}>
-        {[['🏠','Home',()=>setView('home'),view==='home'],['📦','Orders',()=>setView('orders'),view==='orders'],['👤','Account',signOut,false]].map(([icon,label,action,active]) => (
+        {[['🏠','Home',()=>setView('home'),view==='home'],['📦','Orders',()=>setView('orders'),view==='orders'],['👤','Account',()=>setView('account'),view==='account']].map(([icon,label,action,active]) => (
           <button key={label} onClick={action}
             style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'3px', padding:'10px 0 8px', border:'none', background:'none', cursor:'pointer', fontFamily:'DM Sans, sans-serif', color:active?C.saffron:C.stone }}>
             <span style={{ fontSize:'19px' }}>{icon}</span>
