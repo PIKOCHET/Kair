@@ -338,37 +338,17 @@ FRONTEND_URL=https://kair-xi.vercel.app
 
 ## Known Issues & Schema Gaps
 
-### Columns used in code but missing from `001_schema.sql`
-These columns exist in the live Supabase DB (added manually) but are
-not in the migration file. If re-running the migration on a fresh DB,
-add them manually:
+### ✅ Fixed in `002_rls_fixes.sql` (run this on any fresh DB)
+The following were bugs in the original schema — all resolved in migration 002:
 
-```sql
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS pickup_type TEXT DEFAULT 'standard';
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS items_confirmed BOOLEAN DEFAULT false;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS estimated_delivery DATE;
-```
-
-### `notifications` table missing from schema
-`RiderApp.jsx` (ItemEntry) inserts a notification row after confirming
-items (`type: 'items_confirmed'`). This table is not in `001_schema.sql`
-and has no RLS policies. Either create it or remove the insert.
-
-Minimal table if creating:
-```sql
-CREATE TABLE notifications (
-  id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id    UUID REFERENCES profiles(id),
-  order_id   UUID REFERENCES orders(id),
-  type       TEXT,
-  title      TEXT,
-  message    TEXT,
-  is_read    BOOLEAN DEFAULT false,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Own notifications" ON notifications FOR ALL USING (user_id = auth.uid());
-```
+| Issue | Fix |
+|-------|-----|
+| Missing `pickup_type`, `items_confirmed`, `estimated_delivery` columns on `orders` | `ALTER TABLE orders ADD COLUMN IF NOT EXISTS …` |
+| Missing `notifications` table | `CREATE TABLE IF NOT EXISTS notifications …` |
+| No INSERT policy for riders on `order_items` | `"Riders insert order items"` policy added |
+| No INSERT/UPDATE/SELECT policy for riders on `garment_tags` | Three rider policies added |
+| No SELECT policy for riders on unassigned `pending_pickup` orders | `"Riders view pending pickup"` policy added |
+| No UPDATE policy allowing riders to self-assign on `pending_pickup` orders | `"Riders accept pending pickup"` policy added |
 
 ### Auth is email + password, not phone OTP
 `LoginScreen.jsx` uses `supabase.auth.signInWithPassword` / `signUp` with
@@ -382,8 +362,8 @@ foreign keys from the `services` DB table. The two catalogs are kept in
 sync manually.
 
 ### Rider app shows all unassigned orders to all riders
-Any logged-in rider sees every `pending_pickup` order, not just ones in
-their area. This is intentional for now (Pune only, small team) but will
+Any logged-in rider sees every `pending_pickup` order (after 002 policies
+are applied). This is intentional for now (Pune only, small team) but will
 need geofencing or manual routing as scale grows.
 
 ### OpsApp calls backend for tag generation; everything else is direct Supabase
@@ -392,10 +372,10 @@ one action, but all other mutations go directly through the Supabase client.
 The backend is not required for the app to function except for Razorpay
 payment creation/verification and this one endpoint.
 
-### `pickup_type` default in ConfirmView
-New address auto-sets `is_default: true` only when it's the first address.
-If the user has addresses and adds a new one, they must explicitly "Set default"
-from the Account screen.
+### Address `is_default` on new address
+New address in AccountView auto-sets `is_default: true` only when it's the
+first address. If the user already has addresses and adds a new one, they
+must explicitly tap "Set default" from the Account screen.
 
 ---
 

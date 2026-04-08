@@ -241,7 +241,8 @@ export default function RiderApp() {
   const NEXT = {
     pending_pickup:   { label: '✅ Accept & assign to me', next: 'rider_assigned', assignSelf: true },
     rider_assigned:   { label: '📦 Mark as picked up',    next: 'picked_up' },
-    picked_up:        { label: '🏭 Hand to facility',     next: 'in_cleaning' },
+    // picked_up intentionally omitted — ItemEntry handles the picked_up → in_cleaning transition
+    // after rider enters items. Showing "Hand to facility" here would let the rider skip item entry.
     out_for_delivery: { label: '✅ Mark delivered',       next: 'delivered' },
   };
 
@@ -352,8 +353,8 @@ export default function RiderApp() {
                   )}
                   {order.status === 'picked_up' && !order.items_confirmed && (
                     <button onClick={() => setItemEntry({ ...order })}
-                      style={{ flex: 1, padding: '10px', background: C.navy, color: '#fff', border: 'none', borderRadius: '9px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
-                      📋 Enter items
+                      style={{ flex: 1, padding: '10px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '9px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                      📋 Enter items & confirm
                     </button>
                   )}
                   <a href={`https://maps.google.com/?q=${encodeURIComponent(addr)}`} target="_blank" rel="noreferrer"

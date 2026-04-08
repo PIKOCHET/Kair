@@ -329,7 +329,7 @@ function OrdersView({ onBack }) {
     fetchOrders();
     const ch = supabase.channel('my_orders')
       .on('postgres_changes', { event:'UPDATE', schema:'public', table:'orders', filter:`customer_id=eq.${user.id}` },
-        payload => setOrders(prev => prev.map(o => o.id===payload.new.id ? { ...o, ...payload.new } : o))
+        () => fetchOrders()  // re-fetch to get joined items & tags — payload.new only has orders columns
       ).subscribe();
     return () => supabase.removeChannel(ch);
   }, [user]);
