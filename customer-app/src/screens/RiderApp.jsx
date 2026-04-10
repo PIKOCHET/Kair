@@ -73,7 +73,7 @@ function ItemEntry({ order, onDone, onBack }) {
         order_id: order.id,
         type:     'items_confirmed',
         title:    '🧺 Your items have been picked up!',
-        message:  `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected · Total ₹${(totalPaise / 100).toFixed(0)} · Est. delivery ${etaDate?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) || 'TBD'}`,
+        message:  `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected: ${items.map(i => `${i.qty}× ${i.name}`).join(', ')} · Total ₹${(totalPaise / 100).toFixed(0)} · Est. delivery ${etaDate?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) || 'TBD'}`,
         is_read:  false,
       });
 
@@ -89,7 +89,7 @@ function ItemEntry({ order, onDone, onBack }) {
         <button onClick={onBack} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>←</button>
         <div>
           <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Enter items — {order.order_number}</div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>{order.customer?.full_name} · {order.address?.area || order.address?.flat_no || 'Pune'}</div>
+          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>{order.customer?.full_name} · {[order.address?.flat_no, order.address?.area].filter(Boolean).join(', ') || 'Pune'}</div>
         </div>
       </div>
 
@@ -338,10 +338,14 @@ export default function RiderApp() {
                     <a href={`tel:${order.customer?.phone}`} style={{ fontSize: '11px', color: C.saffron, textDecoration: 'none', fontWeight: 600 }}>{order.customer?.phone || '—'}</a>
                   </div>
                 </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.04)', borderRadius: '7px', padding: '7px 9px', marginBottom: '8px' }}>
-                  📍 {addr || '—'}
-                  {order.address?.landmark && <span style={{ opacity: 0.6 }}> · Near {order.address.landmark}</span>}
-                </div>
+                <a href={`https://maps.google.com/?q=${encodeURIComponent(addr || 'Pune')}`} target="_blank" rel="noreferrer"
+                  style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.04)', borderRadius: '7px', padding: '7px 9px', marginBottom: '8px', textDecoration: 'none' }}>
+                  <div>📍 {order.address?.flat_no || order.address?.area || '—'}</div>
+                  {order.address?.flat_no && order.address?.area && <div style={{ paddingLeft: '17px', marginTop: '2px' }}>{order.address.area}</div>}
+                  {order.address?.landmark && <div style={{ paddingLeft: '17px', marginTop: '2px', opacity: 0.7 }}>Near {order.address.landmark}</div>}
+                  <div style={{ paddingLeft: '17px', marginTop: '2px', opacity: 0.6 }}>{order.address?.city || 'Pune'}</div>
+                  <div style={{ paddingLeft: '17px', marginTop: '4px', fontSize: '9px', opacity: 0.35 }}>↗ Open in Maps</div>
+                </a>
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -357,10 +361,6 @@ export default function RiderApp() {
                       📋 Enter items & confirm
                     </button>
                   )}
-                  <a href={`https://maps.google.com/?q=${encodeURIComponent(addr)}`} target="_blank" rel="noreferrer"
-                    style={{ padding: '10px 13px', background: 'rgba(255,255,255,0.07)', border: 'none', borderRadius: '9px', fontSize: '12px', color: 'rgba(255,255,255,0.7)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-                    🗺️
-                  </a>
                 </div>
               </div>
             </div>

@@ -323,6 +323,21 @@ function OrdersView({ onBack }) {
   const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState('');
+  const [cancelConfirm, setCancelConfirm] = useState(null);
+
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
+
+  async function cancelOrder(orderId) {
+    setCancelConfirm(null);
+    const { error } = await supabase.from('orders')
+      .update({ status: 'cancelled' })
+      .eq('id', orderId)
+      .eq('customer_id', user.id);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Order cancelled');
+    fetchOrders();
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -411,9 +426,38 @@ function OrdersView({ onBack }) {
                 💵 Pay on delivery · No upfront payment
               </div>
             )}
+
+            {order.status === 'pending_pickup' && (
+              cancelConfirm === order.id ? (
+                <div style={{ marginTop:'10px', padding:'10px', background:C.dangerBg, borderRadius:'8px', border:`1px solid ${C.danger}` }}>
+                  <div style={{ fontSize:'12px', color:C.danger, fontWeight:600, marginBottom:'8px', textAlign:'center' }}>Are you sure? This will cancel your pickup request.</div>
+                  <div style={{ display:'flex', gap:'8px' }}>
+                    <button onClick={() => setCancelConfirm(null)}
+                      style={{ flex:1, padding:'8px', border:`1px solid ${C.border}`, borderRadius:'8px', background:'#fff', fontSize:'12px', fontWeight:600, color:C.stone, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                      Keep order
+                    </button>
+                    <button onClick={() => cancelOrder(order.id)}
+                      style={{ flex:1, padding:'8px', border:`1px solid ${C.danger}`, borderRadius:'8px', background:C.danger, fontSize:'12px', fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                      Yes, cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setCancelConfirm(order.id)}
+                  style={{ width:'100%', marginTop:'10px', padding:'8px', border:`1px solid ${C.danger}`, borderRadius:'8px', background:'#fff', fontSize:'12px', fontWeight:600, color:C.danger, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                  Cancel order
+                </button>
+              )
+            )}
           </div>
         ))}
       </div>
+
+      {toast && (
+        <div style={{ position:'fixed', bottom:'20px', left:'50%', transform:'translateX(-50%)', background:C.navy, color:'#fff', padding:'10px 18px', borderRadius:'10px', fontSize:'13px', fontWeight:500, zIndex:200, whiteSpace:'nowrap' }}>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }
