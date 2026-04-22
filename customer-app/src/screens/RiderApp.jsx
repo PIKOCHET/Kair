@@ -344,26 +344,26 @@ export default function RiderApp() {
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif', background: '#111827', minHeight: '100vh' }}>
       {/* Header */}
-      <div style={{ background: C.navy, padding: '12px 14px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+      <div style={{ background: `linear-gradient(135deg, ${C.navy} 0%, #152447 100%)`, padding: '16px 18px', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', color: '#fff', letterSpacing: '2px', fontWeight: 400 }}>KAIR</span>
-              <span style={{ background: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.5)', fontSize: '9px', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>RIDER</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: '#fff', letterSpacing: '2px', fontWeight: 400 }}>KAIR</span>
+              <span style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', fontSize: '9px', padding: '3px 7px', borderRadius: '5px', fontWeight: 600 }}>RIDER</span>
             </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginTop: '1px' }}>🏍️ {profile?.full_name || 'Rider'}</div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)' }}>Pune · Online</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginTop: '4px' }}>🏍️ {profile?.full_name || 'Rider'}</div>
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>Pune · Online</div>
           </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <div style={{ background: '#065F46', borderRadius: '20px', padding: '3px 9px', fontSize: '9px', fontWeight: 700, color: '#6EE7B7' }}>● Online</div>
-            <button onClick={signOut} style={{ background: 'rgba(255,255,255,0.08)', border: 'none', borderRadius: '7px', padding: '5px 10px', color: 'rgba(255,255,255,0.6)', fontSize: '11px', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>Sign out</button>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ background: '#065F46', borderRadius: '20px', padding: '5px 11px', fontSize: '10px', fontWeight: 700, color: '#6EE7B7' }}>● Online</div>
+            <button onClick={signOut} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '8px', padding: '6px 12px', color: 'rgba(255,255,255,0.7)', fontSize: '12px', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: 500 }}>Sign out</button>
           </div>
         </div>
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
           {stats.map((s, i) => (
-            <div key={s.lbl} style={{ flex: 1, padding: '8px 4px', textAlign: 'center', borderRight: i < 2 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-              <div style={{ fontSize: '20px', fontWeight: 700, color: C.saffron }}>{s.val}</div>
-              <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)' }}>{s.lbl}</div>
+            <div key={s.lbl} style={{ flex: 1, padding: '10px 6px', textAlign: 'center', borderRight: i < 2 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', fontWeight: 700, color: C.saffron }}>{s.val}</div>
+              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{s.lbl}</div>
             </div>
           ))}
         </div>
@@ -396,19 +396,19 @@ export default function RiderApp() {
           const addr = [order.address?.flat_no, order.address?.area, order.address?.city].filter(Boolean).join(', ');
 
           return (
-            <div key={order.id} style={{ background: '#1F2937', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.06)', marginBottom: '10px', overflow: 'hidden' }}>
+            <div key={order.id} style={{ background: '#1F2937', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.08)', marginBottom: '12px', overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}>
               {/* Card header */}
-              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '9px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                  <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, background: 'rgba(255,255,255,0.08)', color: '#fff', padding: '2px 7px', borderRadius: '4px' }}>{order.order_number}</span>
-                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 9px', borderRadius: '10px', background: sl.bg, color: sl.color }}>{sl.text}</span>
-                  {order.pickup_type === 'urgent' && <span style={{ fontSize: '9px', background: '#FFF0E8', color: C.saffron, padding: '2px 7px', borderRadius: '8px', fontWeight: 700 }}>⚡ URGENT</span>}
+              <div style={{ background: 'rgba(255,255,255,0.04)', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, background: 'rgba(255,255,255,0.12)', color: '#fff', padding: '4px 8px', borderRadius: '5px' }}>{order.order_number}</span>
+                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '4px 10px', borderRadius: '12px', background: sl.bg, color: sl.color }}>{sl.text}</span>
+                  {order.pickup_type === 'urgent' && <span style={{ fontSize: '10px', background: '#FFF0E8', color: C.saffron, padding: '3px 8px', borderRadius: '8px', fontWeight: 700 }}>⚡ URGENT</span>}
                 </div>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: C.saffron }}>{totalRs}</span>
+                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', fontWeight: 700, color: C.saffron }}>{totalRs}</span>
               </div>
 
               {/* Card body */}
-              <div style={{ padding: '10px 12px' }}>
+              <div style={{ padding: '12px 14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                   <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: C.navy, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 700, flexShrink: 0 }}>
                     {(order.customer?.full_name || 'C')[0].toUpperCase()}
@@ -436,16 +436,16 @@ export default function RiderApp() {
                 )}
 
                 {/* Actions */}
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
                   {nextAction && (
                     <button onClick={() => updateStatus(order.id, nextAction.next, nextAction.assignSelf)}
-                      style={{ flex: 1, padding: '10px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '9px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                      style={{ flex: 1, padding: '12px 10px', minHeight: '44px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {nextAction.label}
                     </button>
                   )}
                   {order.status === 'picked_up' && !order.items_confirmed && (
                     <button onClick={() => setItemEntry({ ...order })}
-                      style={{ flex: 1, padding: '10px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '9px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                      style={{ flex: 1, padding: '12px 10px', minHeight: '44px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       📋 Enter items & confirm
                     </button>
                   )}
