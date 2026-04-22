@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { C, STATUS_CONFIG, TAG_STATUSES, fmt } from '../lib/constants';
+import { Bike, Zap, MapPin, Tag, Map, ChevronUp, ChevronDown, X } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -155,7 +156,9 @@ export default function OpsApp() {
             <h2 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:500, marginBottom:'16px' }}>Riders on duty</h2>
             {riders.length === 0 ? (
               <div style={{ textAlign:'center', padding:'60px', color:C.stone }}>
-                <div style={{ fontSize:'40px', marginBottom:'12px' }}>🏍️</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+                  <Bike size={48} strokeWidth={1.5} color={C.stone} opacity={0.5} />
+                </div>
                 <p>No riders yet. Create an account and set role = rider in Supabase.</p>
               </div>
             ) : (
@@ -238,7 +241,9 @@ export default function OpsApp() {
                 <h3 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:500 }}>Assign rider</h3>
                 <p style={{ fontSize:'11px', color:C.stone }}>{assignModal.order_number} · {assignModal.customer?.full_name}</p>
               </div>
-              <button onClick={()=>setAssignModal(null)} style={{ width:'28px', height:'28px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', fontSize:'15px' }}>×</button>
+              <button onClick={()=>setAssignModal(null)} style={{ width:'32px', height:'32px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <X size={18} strokeWidth={2.5} color={C.navy} />
+              </button>
             </div>
             {riders.length===0 ? <p style={{ color:C.stone, textAlign:'center', padding:'20px' }}>No riders available</p> : (
               <div style={{ display:'flex', flexDirection:'column', gap:'7px' }}>
@@ -285,24 +290,39 @@ function OrderCard({ order, riders, onUpdateStatus, onAssign, onUnassign, onTag,
       <div style={{ display:'flex', alignItems:'center', padding:'11px 14px', gap:'10px', cursor:'pointer', borderBottom:open?`1px solid ${C.border}`:'none' }} onClick={() => setOpen(!open)}>
         <div style={{ minWidth:'110px' }}>
           <div style={{ fontFamily:'monospace', fontSize:'12px', fontWeight:700, color:C.navy }}>{order.order_number}</div>
-          {order.pickup_type==='urgent' && <span style={{ fontSize:'8px', background:C.saffronLight, color:C.saffron, padding:'1px 5px', borderRadius:'4px', fontWeight:700 }}>⚡ URGENT</span>}
+          {order.pickup_type==='urgent' && <span style={{ fontSize:'9px', background:C.saffronLight, color:C.saffron, padding:'3px 6px', borderRadius:'5px', fontWeight:700, display:'inline-flex', alignItems:'center', gap:'3px', marginTop:'2px' }}>
+            <Zap size={11} strokeWidth={2.5} />
+            URGENT
+          </span>}
         </div>
         <div style={{ flex:1, minWidth:'130px' }}>
           <div style={{ fontSize:'12px', fontWeight:700, color:C.navy }}>{order.customer?.full_name||'—'}</div>
           <div style={{ fontSize:'10px', color:C.stone }}>{order.customer?.phone}</div>
         </div>
-        <div style={{ flex:1, fontSize:'10px', color:C.stone, minWidth:'150px' }}>📍 {addr||'—'}</div>
+        <div style={{ flex:1, fontSize:'10px', color:C.stone, minWidth:'150px', display:'flex', alignItems:'center', gap:'6px' }}>
+          <MapPin size={12} strokeWidth={2.5} />
+          {addr||'—'}
+        </div>
         <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 9px', borderRadius:'20px', background:sc.bg, color:sc.color, minWidth:'120px', textAlign:'center' }}>
           <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:sc.color, display:'inline-block', marginRight:'4px', verticalAlign:'middle' }}/>
           {sc.label}
         </span>
-        <div style={{ minWidth:'120px', fontSize:'11px' }}>
-          {order.rider ? <span style={{ color:C.success, fontWeight:600 }}>🏍️ {order.rider.full_name}</span> : <span style={{ color:C.stone }}>Unassigned</span>}
+        <div style={{ minWidth:'120px', fontSize:'11px', display:'flex', alignItems:'center', gap:'6px' }}>
+          {order.rider ? (
+            <span style={{ color:C.success, fontWeight:600, display:'flex', alignItems:'center', gap:'6px' }}>
+              <Bike size={12} strokeWidth={2.5} />
+              {order.rider.full_name}
+            </span>
+          ) : (
+            <span style={{ color:C.stone }}>Unassigned</span>
+          )}
         </div>
         <div style={{ fontSize:'13px', fontWeight:700, color:C.saffron, minWidth:'60px', textAlign:'right' }}>
           {order.total_paise > 0 ? fmt.rupees(order.total_paise) : 'TBD'}
         </div>
-        <span style={{ fontSize:'10px', color:C.stone }}>{open?'▲':'▼'}</span>
+        <span style={{ fontSize:'10px', color:C.stone, display:'flex', alignItems:'center', justifyContent:'center' }}>
+          {open ? <ChevronUp size={16} strokeWidth={2} /> : <ChevronDown size={16} strokeWidth={2} />}
+        </span>
       </div>
 
       {/* Expanded */}
@@ -320,12 +340,18 @@ function OrderCard({ order, riders, onUpdateStatus, onAssign, onUnassign, onTag,
             </div>
             <div>
               <div style={{ fontSize:'9px', fontWeight:700, color:C.stone, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'6px' }}>Details</div>
-              {[['Payment', order.payment_method?.toUpperCase()||'COD'],['Type', order.pickup_type==='urgent'?'⚡ Urgent':'Standard'],['Est. delivery', order.estimated_delivery?fmt.date(order.estimated_delivery):'TBD']].map(([k,v]) => (
+              {[['Payment', order.payment_method?.toUpperCase()||'COD'],['Type', order.pickup_type==='urgent'?'Urgent':'Standard'],['Est. delivery', order.estimated_delivery?fmt.date(order.estimated_delivery):'TBD']].map(([k,v]) => (
                 <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize:'11px', color:C.stone, marginBottom:'3px' }}>
-                  <span>{k}</span><span style={{ color:C.navy, fontWeight:500 }}>{v}</span>
+                  <span>{k}</span><span style={{ color:C.navy, fontWeight:500, display:'flex', alignItems:'center', gap:'4px' }}>
+                    {k === 'Type' && order.pickup_type === 'urgent' && <Zap size={12} strokeWidth={2.5} color={C.saffron} />}
+                    {v}
+                  </span>
                 </div>
               ))}
-              {order.special_notes && <div style={{ fontSize:'10px', color:C.stone, background:C.linen, padding:'5px 8px', borderRadius:'6px', marginTop:'6px' }}>📝 {order.special_notes}</div>}
+              {order.special_notes && <div style={{ fontSize:'10px', color:C.stone, background:C.linen, padding:'7px 10px', borderRadius:'6px', marginTop:'8px', display:'flex', alignItems:'flex-start', gap:'6px' }}>
+                <span style={{ fontSize: '12px', flexShrink: 0 }}>📝</span>
+                <span>{order.special_notes}</span>
+              </div>}
             </div>
             <div>
               <div style={{ fontSize:'9px', fontWeight:700, color:C.stone, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'6px' }}>Garment tags</div>
@@ -347,12 +373,21 @@ function OrderCard({ order, riders, onUpdateStatus, onAssign, onUnassign, onTag,
               style={{ padding:'7px 10px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'11px', fontFamily:'DM Sans, sans-serif', color:C.navy, background:'#fff', cursor:'pointer' }}>
               {Object.entries(STATUS_CONFIG).map(([s,sc]) => <option key={s} value={s}>{sc.label}</option>)}
             </select>
-            <button onClick={onAssign} style={ab(C.navy)}>🏍️ {order.rider?'Reassign':'Assign rider'}</button>
+            <button onClick={onAssign} style={{ ...ab(C.navy), display:'inline-flex', alignItems:'center', gap:'6px' }}>
+              <Bike size={14} strokeWidth={2.5} />
+              {order.rider?'Reassign':'Assign rider'}
+            </button>
             {order.rider && <button onClick={onUnassign} style={ab(C.stone)}>Unassign</button>}
-            <button onClick={onTag} style={ab(C.saffron)}>🏷️ Tag items</button>
+            <button onClick={onTag} style={{ ...ab(C.saffron), display:'inline-flex', alignItems:'center', gap:'6px' }}>
+              <Tag size={14} strokeWidth={2.5} />
+              Tag items
+            </button>
             {order.status==='picked_up' && !order.tags?.length && <button onClick={onGenerateTags} style={ab(C.success)}>Generate tags</button>}
             <a href={`https://maps.google.com/?q=${encodeURIComponent(addr)}`} target="_blank" rel="noreferrer"
-              style={{ ...ab(C.info), textDecoration:'none', display:'inline-flex', alignItems:'center' }}>🗺️ Maps</a>
+              style={{ ...ab(C.info), textDecoration:'none', display:'inline-flex', alignItems:'center', gap:'6px' }}>
+              <Map size={14} strokeWidth={2.5} />
+              Maps
+            </a>
           </div>
         </div>
       )}
@@ -371,7 +406,9 @@ function TagModal({ order, onSave, onClose }) {
             <h3 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'18px', color:C.navy, fontWeight:500 }}>Tag items</h3>
             <p style={{ fontSize:'11px', color:C.stone, marginTop:'2px' }}>{order.order_number} · {order.customer?.full_name} · {tags.length} items</p>
           </div>
-          <button onClick={onClose} style={{ width:'28px', height:'28px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', fontSize:'14px' }}>×</button>
+          <button onClick={onClose} style={{ width:'32px', height:'32px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <X size={18} strokeWidth={2.5} color={C.navy} />
+          </button>
         </div>
         <div style={{ flex:1, overflowY:'auto', padding:'14px 22px' }}>
           {tags.length===0 ? <p style={{ color:C.stone, textAlign:'center', padding:'30px' }}>No tags — generate after rider picks up</p> : (

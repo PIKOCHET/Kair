@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { C, CATALOG, fmt } from '../lib/constants';
 import { uploadOrderImage } from '../lib/imageUpload';
+import { Camera, Gift, AlertCircle, Zap, MapPin, Bike, Check, Loader, ChevronLeft, Clock, ClipboardList } from 'lucide-react';
 
 const ALL_SVCS = Object.entries(CATALOG).map(([cat, items]) => ({ cat, items }));
 
@@ -112,7 +113,9 @@ function ItemEntry({ order, onDone, onBack }) {
     <div style={{ background: C.cream, minHeight: '100vh', position: 'relative' }}>
       {/* Header */}
       <div style={{ background: C.navy, padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <button onClick={onBack} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>←</button>
+        <button onClick={onBack} style={{ width: '34px', height: '34px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', background: 'transparent', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <ChevronLeft size={20} strokeWidth={2.5} />
+        </button>
         <div>
           <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Enter items — {order.order_number}</div>
           <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>{order.customer?.full_name} · {[order.address?.flat_no, order.address?.area].filter(Boolean).join(', ') || 'Pune'}</div>
@@ -122,39 +125,53 @@ function ItemEntry({ order, onDone, onBack }) {
       <div style={{ padding: '10px 12px 110px' }}>
         {/* Special instructions from customer */}
         {order.special_notes && (
-          <div style={{ background: '#FFF0E8', borderRadius: '10px', padding: '10px', marginBottom: '10px', borderLeft: `3px solid ${C.saffron}` }}>
-            <div style={{ fontSize: '10px', color: C.saffron, fontWeight: 700, marginBottom: '4px' }}>📝 Customer's special instructions:</div>
-            <div style={{ fontSize: '12px', color: C.navy }}>{order.special_notes}</div>
+          <div style={{ background: '#FFF0E8', borderRadius: '10px', padding: '12px', marginBottom: '10px', borderLeft: `3px solid ${C.saffron}` }}>
+            <div style={{ fontSize: '11px', color: C.saffron, fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '14px' }}>📝</span>
+              Customer's special instructions:
+            </div>
+            <div style={{ fontSize: '13px', color: C.navy }}>{order.special_notes}</div>
           </div>
         )}
 
         {/* Promo code applied */}
         {order.promo_code && (
-          <div style={{ background: '#E8F5EE', borderRadius: '10px', padding: '10px', marginBottom: '10px', borderLeft: `3px solid ${C.success}` }}>
-            <div style={{ fontSize: '10px', color: C.success, fontWeight: 700, marginBottom: '4px' }}>🎁 Promo code applied: {order.promo_code}</div>
-            <div style={{ fontSize: '12px', color: C.navy }}>Discount: {fmt.rupees(order.discount_paise || 0)}</div>
+          <div style={{ background: '#E8F5EE', borderRadius: '10px', padding: '12px', marginBottom: '10px', borderLeft: `3px solid ${C.success}` }}>
+            <div style={{ fontSize: '11px', color: C.success, fontWeight: 700, marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Gift size={14} strokeWidth={2.5} />
+              Promo code applied: {order.promo_code}
+            </div>
+            <div style={{ fontSize: '13px', color: C.navy }}>Discount: {fmt.rupees(order.discount_paise || 0)}</div>
           </div>
         )}
 
         {/* Image upload for damage documentation */}
-        <div style={{ background: '#fff', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '12px', marginBottom: '10px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>📸 Upload damage photos (optional)</div>
-          <label style={{ display: 'block', padding: '12px', border: `2px dashed ${C.border}`, borderRadius: '8px', textAlign: 'center', cursor: 'pointer', background: C.linen, marginBottom: '6px' }}>
+        <div style={{ background: '#fff', borderRadius: '14px', border: `1px solid ${C.border}`, padding: '14px', marginBottom: '10px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+          <div style={{ fontSize: '12px', fontWeight: 700, color: C.navy, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Camera size={16} strokeWidth={2.5} color={C.saffron} />
+            Upload damage photos (optional)
+          </div>
+          <label style={{ display: 'block', padding: '16px', border: `2px dashed ${C.border}`, borderRadius: '10px', textAlign: 'center', cursor: 'pointer', background: C.linen, marginBottom: '8px' }}>
             <input type='file' accept='image/*' onChange={handleImageUpload} disabled={uploading} style={{ display: 'none' }} />
-            <div style={{ fontSize: '18px', marginBottom: '4px' }}>📷</div>
-            <div style={{ fontSize: '10px', fontWeight: 600, color: C.navy }}>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '6px' }}>
+              <Camera size={28} strokeWidth={2} color={C.saffron} />
+            </div>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: C.navy }}>
               {uploading ? 'Uploading...' : 'Tap to upload'}
             </div>
           </label>
-          {uploadError && <div style={{ fontSize: '9px', color: C.danger, padding: '6px', background: C.dangerBg, borderRadius: '6px', marginBottom: '6px' }}>{uploadError}</div>}
+          {uploadError && <div style={{ fontSize: '10px', color: C.danger, padding: '8px', background: C.dangerBg, borderRadius: '8px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <AlertCircle size={14} strokeWidth={2.5} />
+            {uploadError}
+          </div>}
           {uploadedImages.length > 0 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '8px' }}>
               {uploadedImages.map((img, i) => (
                 <div key={i} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: `2px solid ${C.saffron}`, background: C.linen, aspectRatio: '1/1' }}>
                   <img src={img.url} alt='damage' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button onClick={() => removeImage(i)}
-                    style={{ position: 'absolute', top: '3px', right: '3px', width: '24px', height: '24px', borderRadius: '50%', background: C.danger, color: '#fff', border: 'none', fontSize: '13px', cursor: 'pointer', fontWeight: 700 }}>
-                    ✕
+                    style={{ position: 'absolute', top: '6px', right: '6px', width: '28px', height: '28px', borderRadius: '50%', background: C.danger, color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <ChevronLeft size={16} strokeWidth={2.5} style={{ transform: 'rotate(180deg)' }} />
                   </button>
                 </div>
               ))}
@@ -232,19 +249,31 @@ function ItemEntry({ order, onDone, onBack }) {
       </div>
 
  {/* Bottom confirm bar */}
-<div style={{ position:'fixed', bottom:0, left:0, right:0, maxWidth:'480px', margin:'0 auto', background:'#fff', borderTop:`1px solid ${C.border}`, padding:'10px 14px 12px', boxShadow:'0 -4px 20px rgba(0,0,0,0.08)' }}>
-  {error && <p style={{ color:'#D32F2F', fontSize:'11px', marginBottom:'6px', textAlign:'center' }}>{error}</p>}
+<div style={{ position:'fixed', bottom:0, left:0, right:0, maxWidth:'480px', margin:'0 auto', background:'#fff', borderTop:`1px solid ${C.border}`, padding:'12px 14px 14px', boxShadow:'0 -4px 20px rgba(0,0,0,0.08)' }}>
+  {error && <p style={{ color:'#D32F2F', fontSize:'11px', marginBottom:'8px', textAlign:'center' }}>{error}</p>}
   {items.length > 0 && (
-    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'8px', padding:'6px 10px', background:C.linen, borderRadius:'8px' }}>
-      <span style={{ fontSize:'11px', color:C.stone }}>{totalQty} item{totalQty>1?'s':''} · {etaDate ? `Est. ${etaDate.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}` : ''}</span>
-      <span style={{ fontSize:'13px', fontWeight:700, color:C.navy }}>{fmt.rupees(totalPaise)}</span>
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px', padding:'8px 12px', background:C.linen, borderRadius:'10px' }}>
+      <span style={{ fontSize:'12px', color:C.stone, fontWeight:500 }}>{totalQty} item{totalQty>1?'s':''} · {etaDate ? `Est. ${etaDate.toLocaleDateString('en-IN',{day:'numeric',month:'short'})}` : ''}</span>
+      <span style={{ fontSize:'14px', fontWeight:700, color:C.navy }}>{fmt.rupees(totalPaise)}</span>
     </div>
   )}
   <button onClick={save} disabled={saving || items.length===0}
-    style={{ width:'100%', padding:'13px', background:items.length===0?'#E0E0E0':saving?C.stone:C.saffron, color:items.length===0?C.stone:'#fff', border:'none', borderRadius:'10px', fontSize:'13px', fontWeight:700, cursor:items.length===0?'not-allowed':'pointer', fontFamily:'DM Sans, sans-serif' }}>
-    {saving ? '⏳ Saving...' : items.length===0 ? 'Add items above' : `✅ Confirm ${totalQty} item${totalQty>1?'s':''} · ${fmt.rupees(totalPaise)}`}
+    style={{ width:'100%', padding:'14px', background:items.length===0?'#E0E0E0':saving?C.stone:C.saffron, color:items.length===0?C.stone:'#fff', border:'none', borderRadius:'10px', fontSize:'14px', fontWeight:700, cursor:items.length===0?'not-allowed':'pointer', fontFamily:'DM Sans, sans-serif', display:'flex', alignItems:'center', justifyContent:'center', gap:'8px' }}>
+    {saving ? (
+      <>
+        <Loader size={16} strokeWidth={2.5} />
+        Saving...
+      </>
+    ) : items.length===0 ? (
+      'Add items above'
+    ) : (
+      <>
+        <Check size={16} strokeWidth={2.5} />
+        Confirm {totalQty} item{totalQty>1?'s':''} · {fmt.rupees(totalPaise)}
+      </>
+    )}
   </button>
-  <p style={{ textAlign:'center', fontSize:'9px', color:C.stone, marginTop:'5px' }}>Customer notified with item list + delivery date</p>
+  <p style={{ textAlign:'center', fontSize:'10px', color:C.stone, marginTop:'6px', fontWeight:500 }}>Customer notified with item list + delivery date</p>
 </div>
     </div>
   );
@@ -351,7 +380,10 @@ export default function RiderApp() {
               <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: '#fff', letterSpacing: '2px', fontWeight: 400 }}>KAIR</span>
               <span style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)', fontSize: '9px', padding: '3px 7px', borderRadius: '5px', fontWeight: 600 }}>RIDER</span>
             </div>
-            <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginTop: '4px' }}>🏍️ {profile?.full_name || 'Rider'}</div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Bike size={18} strokeWidth={2.5} color='#fff' />
+              {profile?.full_name || 'Rider'}
+            </div>
             <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>Pune · Online</div>
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -384,8 +416,10 @@ export default function RiderApp() {
         {loading && <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.3)' }}>Loading...</div>}
         {!loading && orders.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.3)' }}>
-            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🎉</div>
-            <p>No {tab === 'active' ? 'active' : 'completed'} orders</p>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+              <Check size={48} strokeWidth={1.5} color='rgba(255,255,255,0.3)' />
+            </div>
+            <p style={{ fontSize: '14px', fontWeight: 500 }}>No {tab === 'active' ? 'active' : 'completed'} orders</p>
           </div>
         )}
 
@@ -402,7 +436,10 @@ export default function RiderApp() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, background: 'rgba(255,255,255,0.12)', color: '#fff', padding: '4px 8px', borderRadius: '5px' }}>{order.order_number}</span>
                   <span style={{ fontSize: '10px', fontWeight: 600, padding: '4px 10px', borderRadius: '12px', background: sl.bg, color: sl.color }}>{sl.text}</span>
-                  {order.pickup_type === 'urgent' && <span style={{ fontSize: '10px', background: '#FFF0E8', color: C.saffron, padding: '3px 8px', borderRadius: '8px', fontWeight: 700 }}>⚡ URGENT</span>}
+                  {order.pickup_type === 'urgent' && <span style={{ fontSize: '10px', background: '#FFF0E8', color: C.saffron, padding: '4px 8px', borderRadius: '8px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Zap size={12} strokeWidth={2.5} />
+                    URGENT
+                  </span>}
                 </div>
                 <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', fontWeight: 700, color: C.saffron }}>{totalRs}</span>
               </div>
@@ -419,8 +456,11 @@ export default function RiderApp() {
                   </div>
                 </div>
                 <a href={`https://maps.google.com/?q=${encodeURIComponent(addr || 'Pune')}`} target="_blank" rel="noreferrer"
-                  style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.04)', borderRadius: '7px', padding: '7px 9px', marginBottom: '8px', textDecoration: 'none' }}>
-                  <div>📍 {order.address?.flat_no || order.address?.area || '—'}</div>
+                  style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '9px 11px', marginBottom: '8px', textDecoration: 'none' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                    <MapPin size={14} strokeWidth={2.5} />
+                    {order.address?.flat_no || order.address?.area || '—'}
+                  </div>
                   {order.address?.flat_no && order.address?.area && <div style={{ paddingLeft: '17px', marginTop: '2px' }}>{order.address.area}</div>}
                   {order.address?.landmark && <div style={{ paddingLeft: '17px', marginTop: '2px', opacity: 0.7 }}>Near {order.address.landmark}</div>}
                   <div style={{ paddingLeft: '17px', marginTop: '2px', opacity: 0.6 }}>{order.address?.city || 'Pune'}</div>
@@ -429,8 +469,11 @@ export default function RiderApp() {
 
                 {/* Special instructions */}
                 {order.special_notes && (
-                  <div style={{ fontSize: '10px', color: '#fff', background: 'rgba(255,255,255,0.08)', padding: '8px', borderRadius: '7px', marginBottom: '8px', borderLeft: `3px solid ${C.saffron}` }}>
-                    <div style={{ fontSize: '9px', opacity: 0.5, marginBottom: '3px' }}>📝 Special instructions:</div>
+                  <div style={{ fontSize: '10px', color: '#fff', background: 'rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px', marginBottom: '10px', borderLeft: `3px solid ${C.saffron}` }}>
+                    <div style={{ fontSize: '10px', opacity: 0.6, marginBottom: '5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '13px' }}>📝</span>
+                      Special instructions:
+                    </div>
                     <div style={{ opacity: 0.9 }}>{order.special_notes}</div>
                   </div>
                 )}
@@ -445,8 +488,9 @@ export default function RiderApp() {
                   )}
                   {order.status === 'picked_up' && !order.items_confirmed && (
                     <button onClick={() => setItemEntry({ ...order })}
-                      style={{ flex: 1, padding: '12px 10px', minHeight: '44px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      📋 Enter items & confirm
+                      style={{ flex: 1, padding: '12px 10px', minHeight: '44px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <ClipboardList size={16} strokeWidth={2.5} />
+                      Enter items & confirm
                     </button>
                   )}
                 </div>

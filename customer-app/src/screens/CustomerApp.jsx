@@ -3,13 +3,14 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { C, STATUS_CONFIG, CATALOG, fmt } from '../lib/constants';
 import { uploadOrderImage } from '../lib/imageUpload';
+import { MapPin, Clock, Zap, Smartphone, Bike, Wand2, Sparkles, Camera, Gift, Star, Package, User, Home, AlertCircle, ChevronLeft, Plus, X, Check, ChevronRight } from 'lucide-react';
 
 // ── HELPERS ───────────────────────────────────────────────
 function StatusBadge({ status }) {
   const s = STATUS_CONFIG[status] || { label: status, color: C.stone, bg: C.linen };
   return (
-    <span style={{ fontSize:'10px', fontWeight:600, padding:'5px 10px', borderRadius:'20px', background:s.bg, color:s.color, display:'inline-flex', alignItems:'center', gap:'4px', letterSpacing:'0.2px' }}>
-      <span style={{ width:'6px', height:'6px', borderRadius:'50%', background:s.color }} />
+    <span style={{ fontSize:'12px', fontWeight:700, padding:'6px 12px', borderRadius:'20px', background:s.bg, color:s.color, display:'inline-flex', alignItems:'center', gap:'5px', letterSpacing:'0.3px' }}>
+      <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:s.color }} />
       {s.label}
     </span>
   );
@@ -21,17 +22,17 @@ function ProgressBar({ status }) {
   const si = IDX[status] ?? 0;
   const pct = Math.min((si/3)*100, 100);
   return (
-    <div style={{ margin:'10px 0 4px' }}>
-      <div style={{ position:'relative', height:'2px', background:C.border, margin:'0 10px', borderRadius:'2px' }}>
-        <div style={{ position:'absolute', top:0, left:0, height:'2px', background:C.saffron, width:`${pct}%`, borderRadius:'2px', transition:'width 0.5s' }} />
+    <div style={{ margin:'12px 0 6px' }}>
+      <div style={{ position:'relative', height:'3px', background:C.border, margin:'0 8px', borderRadius:'3px' }}>
+        <div style={{ position:'absolute', top:0, left:0, height:'3px', background:C.saffron, width:`${pct}%`, borderRadius:'3px', transition:'width 0.5s' }} />
       </div>
-      <div style={{ display:'flex', marginTop:'-10px' }}>
+      <div style={{ display:'flex', marginTop:'-12px' }}>
         {STEPS.map((step, i) => (
-          <div key={step} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'4px' }}>
-            <div style={{ width:'20px', height:'20px', borderRadius:'50%', border:`2px solid ${i<=si?C.saffron:C.border}`, background:i<si?C.saffron:i===si?'#fff':C.linen, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'8px', color:'#fff', zIndex:1 }}>
-              {i<si?'✓':i===si?<span style={{ width:'7px', height:'7px', borderRadius:'50%', background:C.saffron, display:'block' }} />:''}
+          <div key={step} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:'5px' }}>
+            <div style={{ width:'24px', height:'24px', borderRadius:'50%', border:`2.5px solid ${i<=si?C.saffron:C.border}`, background:i<si?C.saffron:i===si?'#fff':C.linen, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', color:'#fff', zIndex:1, fontWeight:700 }}>
+              {i<si?'✓':i===si?<span style={{ width:'8px', height:'8px', borderRadius:'50%', background:C.saffron, display:'block' }} />:''}
             </div>
-            <span style={{ fontSize:'8px', color:C.stone, textAlign:'center', lineHeight:1.2 }}>{step}</span>
+            <span style={{ fontSize:'10px', fontWeight:600, color:C.stone, textAlign:'center', lineHeight:1.3 }}>{step}</span>
           </div>
         ))}
       </div>
@@ -74,11 +75,14 @@ function HomeView({ profile, onPickup, onViewOrders }) {
       <div style={{ background:`linear-gradient(135deg, ${C.navy} 0%, #152447 100%)`, padding:'16px 20px 12px', boxShadow:'0 2px 8px rgba(13,27,62,0.08)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-            <div style={{ width:'36px', height:'36px', background:C.saffron, borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px' }}>🧺</div>
-            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:'#fff', fontWeight:400, letterSpacing:'3px', lineHeight:1 }}>KAIR</div>
+            <div style={{ width:'40px', height:'40px', background:C.saffron, borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              <Smartphone color='#fff' size={20} strokeWidth={2.5} />
+            </div>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'22px', color:'#fff', fontWeight:400, letterSpacing:'4px', lineHeight:1 }}>KAIR</div>
           </div>
-          <div style={{ display:'flex', alignItems:'center', gap:'6px', background:'rgba(255,255,255,0.08)', borderRadius:'20px', padding:'6px 12px', fontSize:'11px', color:'rgba(255,255,255,0.5)', fontWeight:500 }}>
-            📍 Pune
+          <div style={{ display:'flex', alignItems:'center', gap:'8px', background:'rgba(255,255,255,0.08)', borderRadius:'20px', padding:'6px 12px', fontSize:'11px', color:'rgba(255,255,255,0.5)', fontWeight:500 }}>
+            <MapPin size={14} strokeWidth={2.5} />
+            Pune
           </div>
         </div>
         <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'18px', color:'#fff', fontStyle:'italic', fontWeight:400 }}>
@@ -94,14 +98,14 @@ function HomeView({ profile, onPickup, onViewOrders }) {
           <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.45)', marginBottom:'24px', fontFamily:'DM Sans, sans-serif' }}>We'll be at your door within 1 hour</div>
           <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
             {[
-              { type:'standard', icon:'🕐', title:'Standard', sub:'Within 1 hour', bg:'#fff', color:C.navy, border:'none' },
-              { type:'urgent',   icon:'⚡', title:'Urgent',   sub:'Priority pickup', bg:C.saffron, color:'#fff', border:'none' },
+              { type:'standard', Icon:Clock, title:'Standard', sub:'Within 1 hour', bg:'#fff', color:C.navy, border:'none' },
+              { type:'urgent',   Icon:Zap,   title:'Urgent',   sub:'Priority pickup', bg:C.saffron, color:'#fff', border:'none' },
             ].map(btn => (
               <button key={btn.type} onClick={() => onPickup(btn.type)}
-                style={{ borderRadius:'12px', padding:'20px 14px', border:btn.border, minHeight:'80px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:'6px', fontFamily:'DM Sans, sans-serif', background:btn.bg, color:btn.color, transition:'all 0.2s', boxShadow:btn.bg==='#fff'?'0 2px 12px rgba(0,0,0,0.06)':'none' }}>
-                <span style={{ fontSize:'28px', marginBottom:'2px' }}>{btn.icon}</span>
-                <span style={{ fontSize:'14px', fontWeight:700 }}>{btn.title}</span>
-                <span style={{ fontSize:'10px', opacity:0.7 }}>{btn.sub}</span>
+                style={{ borderRadius:'14px', padding:'24px 14px', border:btn.border, minHeight:'88px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', fontFamily:'DM Sans, sans-serif', background:btn.bg, color:btn.color, transition:'all 0.2s', boxShadow:btn.bg==='#fff'?'0 4px 16px rgba(0,0,0,0.08)':'none' }}>
+                <btn.Icon size={32} strokeWidth={2.2} />
+                <span style={{ fontSize:'15px', fontWeight:700 }}>{btn.title}</span>
+                <span style={{ fontSize:'11px', opacity:0.7 }}>{btn.sub}</span>
               </button>
             ))}
           </div>
@@ -118,7 +122,9 @@ function HomeView({ profile, onPickup, onViewOrders }) {
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px' }}>
                   <div>
                     <div style={{ fontSize:'10px', fontFamily:'monospace', fontWeight:700, color:C.stone }}>{order.order_number}</div>
-                    {order.pickup_type === 'urgent' && <span style={{ fontSize:'10px', background:C.saffronLight, color:C.saffron, padding:'3px 8px', borderRadius:'6px', fontWeight:700, marginTop:'4px', display:'inline-block' }}>⚡ Urgent</span>}
+                    {order.pickup_type === 'urgent' && <span style={{ fontSize:'10px', background:C.saffronLight, color:C.saffron, padding:'4px 8px', borderRadius:'6px', fontWeight:700, marginTop:'4px', display:'inline-flex', alignItems:'center', gap:'4px' }}>
+                      <Zap size={12} strokeWidth={2.5} /> Urgent
+                    </span>}
                   </div>
                   <div style={{ textAlign:'right' }}>
                     <StatusBadge status={order.status} />
@@ -133,14 +139,19 @@ function HomeView({ profile, onPickup, onViewOrders }) {
         )}
 
         {/* How it works */}
-        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
-          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'17px', color:C.navy, fontWeight:500, marginBottom:'12px' }}>How it works</div>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'6px' }}>
-            {[['📱','1','Request pickup'],['🏍️','2','Rider arrives'],['🧺','3','Expert clean'],['✨','4','Back to door']].map(([icon, num, txt]) => (
-              <div key={num} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'3px', textAlign:'center' }}>
-                <span style={{ fontSize:'18px' }}>{icon}</span>
-                <span style={{ width:'16px', height:'16px', borderRadius:'50%', background:C.saffron, color:'#fff', fontSize:'8px', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>{num}</span>
-                <span style={{ fontSize:'9px', color:C.stone, lineHeight:1.3 }}>{txt}</span>
+        <div style={{ background:'#fff', borderRadius:'16px', border:`1px solid ${C.border}`, padding:'16px', marginBottom:'14px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'18px', color:C.navy, fontWeight:500, marginBottom:'14px' }}>How it works</div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'8px' }}>
+            {[
+              { Icon:Smartphone, num:'1', txt:'Request pickup' },
+              { Icon:Bike, num:'2', txt:'Rider arrives' },
+              { Icon:Wand2, num:'3', txt:'Expert clean' },
+              { Icon:Sparkles, num:'4', txt:'Back to door' }
+            ].map(step => (
+              <div key={step.num} style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:'6px', textAlign:'center' }}>
+                <step.Icon size={24} strokeWidth={2.2} color={C.saffron} />
+                <span style={{ width:'28px', height:'28px', borderRadius:'50%', background:C.saffron, color:'#fff', fontSize:'12px', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{step.num}</span>
+                <span style={{ fontSize:'11px', color:C.stone, lineHeight:1.3, fontWeight:500 }}>{step.txt}</span>
               </div>
             ))}
           </div>
@@ -265,19 +276,34 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
   return (
     <div style={{ background:C.cream, minHeight:'100vh' }}>
       <div style={{ background:'#fff', padding:'12px 16px', display:'flex', alignItems:'center', gap:'10px', borderBottom:`1px solid ${C.border}`, position:'sticky', top:0, zIndex:10 }}>
-        <button onClick={onBack} style={{ width:'30px', height:'30px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', fontSize:'16px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>←</button>
+        <button onClick={onBack} style={{ width:'36px', height:'36px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.2s' }}>
+          <ChevronLeft size={20} strokeWidth={2.5} color={C.navy} />
+        </button>
         <span style={{ fontSize:'15px', fontWeight:700, color:C.navy }}>Confirm pickup</span>
       </div>
 
       <div style={{ padding:'14px 16px 100px' }}>
         {/* Type badge */}
-        <div style={{ borderRadius:'10px', padding:'10px 14px', fontSize:'12px', fontWeight:600, marginBottom:'12px', background:isUrgent?C.saffronLight:C.infoBg, color:isUrgent?C.saffron:C.info }}>
-          {isUrgent ? '⚡ Urgent pickup — priority service' : '🕐 Standard pickup — within 1 hour'}
+        <div style={{ borderRadius:'10px', padding:'12px 14px', fontSize:'12px', fontWeight:600, marginBottom:'12px', background:isUrgent?C.saffronLight:C.infoBg, color:isUrgent?C.saffron:C.info, display:'flex', alignItems:'center', gap:'8px' }}>
+          {isUrgent ? (
+            <>
+              <Zap size={16} strokeWidth={2.5} />
+              Urgent pickup — priority service
+            </>
+          ) : (
+            <>
+              <Clock size={16} strokeWidth={2.5} />
+              Standard pickup — within 1 hour
+            </>
+          )}
         </div>
 
         {/* Saved addresses */}
         <div style={{ background:'#fff', borderRadius:'16px', border:`1px solid ${C.border}`, padding:'18px', marginBottom:'14px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'16px', fontWeight:600, color:C.navy, marginBottom:'14px' }}>📍 Pickup address</div>
+          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'16px', fontWeight:600, color:C.navy, marginBottom:'14px', display:'flex', alignItems:'center', gap:'8px' }}>
+            <MapPin size={18} strokeWidth={2.5} color={C.saffron} />
+            Pickup address
+          </div>
           {saved.map(addr => (
             <div key={addr.id} onClick={() => setSelected(addr.id)}
               style={{ display:'flex', alignItems:'flex-start', gap:'12px', padding:'12px 14px', borderRadius:'12px', border:`1.5px solid ${selected===addr.id?C.saffron:C.border}`, background:selected===addr.id?'rgba(232,89,10,0.04)':'#fff', borderLeft:selected===addr.id?`3px solid ${C.saffron}`:'none', cursor:'pointer', marginBottom:'10px', transition:'all 0.2s' }}>
@@ -310,7 +336,10 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
 
         {/* Special instructions */}
         <div style={{ background:'#fff', borderRadius:'16px', border:`1px solid ${C.border}`, padding:'18px', marginBottom:'14px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'16px', fontWeight:600, color:C.navy, marginBottom:'12px' }}>💬 Special instructions (optional)</div>
+          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'16px', fontWeight:600, color:C.navy, marginBottom:'12px', display:'flex', alignItems:'center', gap:'8px' }}>
+            <span style={{ display:'flex', alignItems:'center', justifyContent:'center', width:'20px', height:'20px', fontSize:'14px' }}>📝</span>
+            Special instructions (optional)
+          </div>
           <textarea value={specialNotes} onChange={e => setSpecialNotes(e.target.value.slice(0, 300))}
             placeholder="E.g. Handle silk saree with care, wine stain on blue shirt sleeve, do not fold the suit jacket"
             style={{ width:'100%', padding:'12px 14px', border:`1px solid ${C.border}`, borderRadius:'10px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box', minHeight:'80px', resize:'vertical', lineHeight:'1.5' }} />
@@ -318,18 +347,26 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
         </div>
 
         {/* Image upload for stains/damage */}
-        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
-          <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>📸 Photos of stains/damage (optional)</div>
-          <label style={{ display:'block', padding:'20px', border:`2px dashed ${C.border}`, borderRadius:'10px', textAlign:'center', cursor:'pointer', background:C.linen, marginBottom:'8px', transition:'all 0.2s' }}>
+        <div style={{ background:'#fff', borderRadius:'16px', border:`1px solid ${C.border}`, padding:'16px', marginBottom:'14px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
+          <div style={{ fontSize:'13px', fontWeight:700, color:C.navy, marginBottom:'12px', display:'flex', alignItems:'center', gap:'8px' }}>
+            <Camera size={18} strokeWidth={2.5} color={C.saffron} />
+            Photos of stains/damage (optional)
+          </div>
+          <label style={{ display:'block', padding:'28px 20px', border:`2px dashed ${C.border}`, borderRadius:'12px', textAlign:'center', cursor:'pointer', background:C.linen, marginBottom:'8px', transition:'all 0.2s' }}>
             <input type='file' accept='image/*' onChange={handleImageUpload} disabled={uploading} style={{ display:'none' }} />
-            <div style={{ fontSize:'24px', marginBottom:'6px' }}>📷</div>
-            <div style={{ fontSize:'12px', fontWeight:600, color:C.navy, marginBottom:'2px' }}>
+            <div style={{ display:'flex', justifyContent:'center', marginBottom:'8px' }}>
+              <Camera size={32} strokeWidth={2} color={C.saffron} />
+            </div>
+            <div style={{ fontSize:'13px', fontWeight:600, color:C.navy, marginBottom:'4px' }}>
               {uploading ? 'Uploading...' : 'Tap to upload image'}
             </div>
-            <div style={{ fontSize:'10px', color:C.stone }}>PNG, JPG up to 5MB</div>
+            <div style={{ fontSize:'11px', color:C.stone }}>PNG, JPG up to 5MB</div>
           </label>
 
-          {uploadError && <div style={{ fontSize:'11px', color:C.danger, padding:'8px', background:C.dangerBg, borderRadius:'6px', marginBottom:'8px' }}>⚠️ {uploadError}</div>}
+          {uploadError && <div style={{ fontSize:'11px', color:C.danger, padding:'8px 12px', background:C.dangerBg, borderRadius:'8px', marginBottom:'8px', display:'flex', alignItems:'center', gap:'8px' }}>
+            <AlertCircle size={14} strokeWidth={2.5} />
+            {uploadError}
+          </div>}
 
           {uploadedImages.length > 0 && (
             <div style={{ marginTop:'10px' }}>
@@ -339,8 +376,8 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
                   <div key={i} style={{ position:'relative', borderRadius:'10px', overflow:'hidden', border:`2px solid ${C.saffron}`, background:C.linen, aspectRatio:'1/1' }}>
                     <img src={img.url} alt='uploaded' style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                     <button onClick={() => removeImage(i)}
-                      style={{ position:'absolute', top:'6px', right:'6px', width:'28px', height:'28px', borderRadius:'50%', background:C.danger, color:'#fff', border:'none', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>
-                      ✕
+                      style={{ position:'absolute', top:'8px', right:'8px', width:'32px', height:'32px', borderRadius:'50%', background:C.danger, color:'#fff', border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}>
+                      <X size={18} strokeWidth={2.5} />
                     </button>
                   </div>
                 ))}
@@ -351,7 +388,10 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
 
         {/* Promo code */}
         <div style={{ background:'#fff', borderRadius:'16px', border:`1px solid ${C.border}`, padding:'18px', marginBottom:'14px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
-          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'16px', fontWeight:600, color:C.navy, marginBottom:'12px' }}>🎁 Promo code (optional)</div>
+          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'16px', fontWeight:600, color:C.navy, marginBottom:'12px', display:'flex', alignItems:'center', gap:'8px' }}>
+            <Gift size={18} strokeWidth={2.5} color={C.saffron} />
+            Promo code (optional)
+          </div>
           <div style={{ display:'flex', gap:'10px', marginBottom:'10px' }}>
             <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder='Enter promo code'
               style={{ flex:1, padding:'12px 14px', border:`1px solid ${C.border}`, borderRadius:'10px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box' }} />
@@ -407,7 +447,9 @@ function ConfirmedView({ order, onTrack }) {
 
   return (
     <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px 24px', background:C.cream }}>
-      <div style={{ fontSize:'56px', marginBottom:'14px' }}>🎉</div>
+      <div style={{ width:'64px', height:'64px', borderRadius:'50%', background:C.saffronLight, display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'20px' }}>
+        <Check size={40} strokeWidth={2} color={C.saffron} />
+      </div>
       <h2 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'28px', color:C.navy, fontWeight:400, textAlign:'center', marginBottom:'8px' }}>Pickup requested!</h2>
       <p style={{ fontSize:'13px', color:C.stone, textAlign:'center', lineHeight:1.6, marginBottom:'28px' }}>
         Order <strong style={{ fontFamily:'monospace', color:C.navy }}>{order.order_number}</strong> confirmed.<br />A rider is being assigned now.
@@ -418,7 +460,10 @@ function ConfirmedView({ order, onTrack }) {
         <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.4)', marginTop:'5px' }}>minutes · seconds</div>
       </div>
       {order.pickup_type === 'urgent' && (
-        <div style={{ background:C.saffronLight, color:C.saffron, fontSize:'11px', fontWeight:700, padding:'6px 16px', borderRadius:'20px', marginBottom:'16px' }}>⚡ Urgent — priority pickup assigned</div>
+        <div style={{ background:C.saffronLight, color:C.saffron, fontSize:'12px', fontWeight:700, padding:'8px 16px', borderRadius:'20px', marginBottom:'16px', display:'flex', alignItems:'center', gap:'6px' }}>
+          <Zap size={14} strokeWidth={2.5} />
+          Urgent — priority pickup assigned
+        </div>
       )}
       <button onClick={onTrack} style={{ width:'100%', padding:'14px', background:C.navy, color:'#fff', border:'none', borderRadius:'12px', fontSize:'14px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
         Track my order →
@@ -489,7 +534,9 @@ function OrdersView({ onBack }) {
   return (
     <div style={{ background:C.cream, minHeight:'100vh', paddingBottom:'70px' }}>
       <div style={{ background:'#fff', padding:'12px 16px', display:'flex', alignItems:'center', gap:'10px', borderBottom:`1px solid ${C.border}`, position:'sticky', top:0, zIndex:10 }}>
-        <button onClick={onBack} style={{ width:'30px', height:'30px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', fontSize:'16px', display:'flex', alignItems:'center', justifyContent:'center' }}>←</button>
+        <button onClick={onBack} style={{ width:'36px', height:'36px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', transition:'all 0.2s' }}>
+          <ChevronLeft size={20} strokeWidth={2.5} color={C.navy} />
+        </button>
         <span style={{ fontSize:'15px', fontWeight:700, color:C.navy }}>My orders</span>
       </div>
 
@@ -497,8 +544,10 @@ function OrdersView({ onBack }) {
         {loading && <div style={{ textAlign:'center', padding:'60px', color:C.stone }}>Loading...</div>}
         {!loading && orders.length === 0 && (
           <div style={{ textAlign:'center', padding:'60px' }}>
-            <div style={{ fontSize:'48px', marginBottom:'12px' }}>📦</div>
-            <p style={{ color:C.stone }}>No orders yet. Request your first pickup!</p>
+            <div style={{ display:'flex', justifyContent:'center', marginBottom:'16px' }}>
+              <Package size={56} strokeWidth={1.5} color={C.stone} opacity={0.5} />
+            </div>
+            <p style={{ color:C.stone, fontSize:'14px', fontWeight:500 }}>No orders yet. Request your first pickup!</p>
           </div>
         )}
         {orders.map(order => (
@@ -506,8 +555,14 @@ function OrdersView({ onBack }) {
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'12px' }}>
               <div>
                 <div style={{ fontSize:'10px', fontFamily:'monospace', fontWeight:700, color:C.stone }}>{order.order_number}</div>
-                <div style={{ fontSize:'12px', color:C.stone, marginTop:'4px', fontWeight:500 }}>📍 {order.address?.area || '—'}</div>
-                {order.pickup_type==='urgent' && <span style={{ fontSize:'9px', background:C.saffronLight, color:C.saffron, padding:'3px 8px', borderRadius:'6px', fontWeight:700, display:'inline-block', marginTop:'4px' }}>⚡ Urgent</span>}
+                <div style={{ fontSize:'12px', color:C.stone, marginTop:'4px', fontWeight:500, display:'flex', alignItems:'center', gap:'6px' }}>
+                  <MapPin size={12} strokeWidth={2.5} />
+                  {order.address?.area || '—'}
+                </div>
+                {order.pickup_type==='urgent' && <span style={{ fontSize:'11px', background:C.saffronLight, color:C.saffron, padding:'4px 8px', borderRadius:'6px', fontWeight:700, display:'inline-flex', alignItems:'center', gap:'4px', marginTop:'4px' }}>
+                  <Zap size={12} strokeWidth={2.5} />
+                  Urgent
+                </span>}
               </div>
               <div style={{ textAlign:'right' }}>
                 <StatusBadge status={order.status} />
@@ -568,12 +623,15 @@ function OrdersView({ onBack }) {
             {order.status === 'delivered' && (!order.rating || order.rating.length === 0) && (
               ratingOrder === order.id ? (
                 <div style={{ marginTop:'10px', background:C.infoBg, borderRadius:'10px', padding:'12px', border:`1px solid ${C.info}` }}>
-                  <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>How was your experience?</div>
-                  <div style={{ display:'flex', gap:'8px', justifyContent:'center', marginBottom:'12px' }}>
+                  <div style={{ fontSize:'13px', fontWeight:700, color:C.navy, marginBottom:'12px', display:'flex', alignItems:'center', gap:'8px' }}>
+                    <Star size={18} color={C.saffron} strokeWidth={2} />
+                    How was your experience?
+                  </div>
+                  <div style={{ display:'flex', gap:'12px', justifyContent:'center', marginBottom:'12px' }}>
                     {[1,2,3,4,5].map(star => (
                       <button key={star} onClick={() => setRatingValue(star)}
-                        style={{ fontSize:'28px', border:'none', background:'transparent', cursor:'pointer', opacity:ratingValue>=star?1:0.3, transform:ratingValue>=star?'scale(1.1)':'scale(1)', transition:'all 0.15s' }}>
-                        ⭐
+                        style={{ border:'none', background:'transparent', cursor:'pointer', opacity:ratingValue>=star?1:0.3, transform:ratingValue>=star?'scale(1.15)':'scale(1)', transition:'all 0.15s', padding:'4px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        <Star size={32} fill={ratingValue>=star?C.saffron:'none'} color={C.saffron} strokeWidth={1.5} />
                       </button>
                     ))}
                   </div>
@@ -593,20 +651,26 @@ function OrdersView({ onBack }) {
                 </div>
               ) : (
                 <button onClick={() => setRatingOrder(order.id)}
-                  style={{ width:'100%', marginTop:'10px', padding:'10px', border:`1.5px solid ${C.info}`, borderRadius:'8px', background:C.infoBg, fontSize:'12px', fontWeight:700, color:C.info, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
-                  ⭐ Rate your experience
+                  style={{ width:'100%', marginTop:'10px', padding:'10px', border:`1.5px solid ${C.info}`, borderRadius:'8px', background:C.infoBg, fontSize:'12px', fontWeight:700, color:C.info, cursor:'pointer', fontFamily:'DM Sans, sans-serif', display:'flex', alignItems:'center', justifyContent:'center', gap:'6px' }}>
+                  <Star size={16} strokeWidth={2} />
+                  Rate your experience
                 </button>
               )
             )}
 
             {/* Rating display (show if already rated) */}
             {order.status === 'delivered' && order.rating && order.rating.length > 0 && (
-              <div style={{ marginTop:'10px', background:C.successBg, borderRadius:'10px', padding:'10px', border:`1px solid ${C.success}` }}>
-                <div style={{ fontSize:'11px', color:C.success, fontWeight:700, marginBottom:'4px' }}>✓ Your rating</div>
-                <div style={{ fontSize:'16px', letterSpacing:'2px', marginBottom:'4px' }}>
-                  {Array(order.rating[0].rating).fill('⭐').join('')}
+              <div style={{ marginTop:'10px', background:C.successBg, borderRadius:'10px', padding:'12px', border:`1px solid ${C.success}` }}>
+                <div style={{ fontSize:'12px', color:C.success, fontWeight:700, marginBottom:'8px', display:'flex', alignItems:'center', gap:'6px' }}>
+                  <Check size={16} strokeWidth={2.5} />
+                  Your rating
                 </div>
-                {order.rating[0].feedback && <div style={{ fontSize:'11px', color:C.navy, fontStyle:'italic' }}>{order.rating[0].feedback}</div>}
+                <div style={{ display:'flex', gap:'4px', marginBottom:'8px' }}>
+                  {Array(order.rating[0].rating).fill(0).map((_, i) => (
+                    <Star key={i} size={24} fill={C.saffron} color={C.saffron} strokeWidth={0} />
+                  ))}
+                </div>
+                {order.rating[0].feedback && <div style={{ fontSize:'12px', color:C.navy, fontStyle:'italic' }}>{order.rating[0].feedback}</div>}
               </div>
             )}
 
@@ -645,7 +709,9 @@ function OrdersView({ onBack }) {
       {/* Image viewer modal */}
       {viewingImage && (
         <div onClick={() => setViewingImage(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.95)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', zIndex:300, cursor:'pointer', padding:'20px' }}>
-          <button onClick={() => setViewingImage(null)} style={{ position:'absolute', top:'20px', right:'20px', width:'40px', height:'40px', borderRadius:'50%', background:'#fff', color:C.navy, border:'none', fontSize:'24px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', zIndex:301 }}>✕</button>
+          <button onClick={() => setViewingImage(null)} style={{ position:'absolute', top:'20px', right:'20px', width:'44px', height:'44px', borderRadius:'50%', background:'#fff', color:C.navy, border:'none', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:301, transition:'all 0.2s' }}>
+            <X size={24} strokeWidth={2.5} />
+          </button>
           <div onClick={e => e.stopPropagation()} style={{ position:'relative', width:'100%', maxWidth:'95vw', maxHeight:'70vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
             <img src={viewingImage.image_url} alt='full view' style={{ maxWidth:'100%', maxHeight:'65vh', objectFit:'contain', borderRadius:'12px', marginBottom:'12px' }} />
           </div>
@@ -716,13 +782,15 @@ function AccountView({ onBack }) {
       {/* Header */}
       <div style={{ background:C.navy, padding:'14px 16px 20px' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'10px', marginBottom:'16px' }}>
-          <button onClick={onBack} style={{ width:'30px', height:'30px', borderRadius:'50%', border:'1px solid rgba(255,255,255,0.2)', background:'transparent', cursor:'pointer', fontSize:'16px', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>←</button>
+          <button onClick={onBack} style={{ width:'36px', height:'36px', borderRadius:'50%', border:'1px solid rgba(255,255,255,0.2)', background:'transparent', cursor:'pointer', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.2s' }}>
+            <ChevronLeft size={20} strokeWidth={2.5} />
+          </button>
           <span style={{ fontSize:'15px', fontWeight:700, color:'#fff' }}>Account</span>
         </div>
         {/* Avatar + name */}
         <div style={{ display:'flex', alignItems:'center', gap:'14px' }}>
-          <div style={{ width:'52px', height:'52px', borderRadius:'50%', background:C.saffron, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', flexShrink:0 }}>
-            {profile?.full_name?.charAt(0)?.toUpperCase() || '👤'}
+          <div style={{ width:'56px', height:'56px', borderRadius:'50%', background:C.saffron, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, fontSize:'24px', fontWeight:700, color:'#fff' }}>
+            {profile?.full_name?.charAt(0)?.toUpperCase() || <User size={28} strokeWidth={2} color='#fff' />}
           </div>
           <div>
             <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:'#fff', fontWeight:400 }}>{profile?.full_name || '—'}</div>
@@ -734,9 +802,12 @@ function AccountView({ onBack }) {
 
       <div style={{ padding:'16px' }}>
         {/* Saved addresses */}
-        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'12px' }}>
+        <div style={{ background:'#fff', borderRadius:'16px', border:`1px solid ${C.border}`, padding:'16px', marginBottom:'12px', boxShadow:'0 2px 12px rgba(0,0,0,0.06)' }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'12px' }}>
-            <div style={{ fontSize:'13px', fontWeight:700, color:C.navy }}>📍 Saved addresses</div>
+            <div style={{ fontSize:'14px', fontWeight:700, color:C.navy, display:'flex', alignItems:'center', gap:'8px' }}>
+              <MapPin size={18} strokeWidth={2.5} color={C.saffron} />
+              Saved addresses
+            </div>
             {!addingNew && (
               <button onClick={() => setAddingNew(true)}
                 style={{ fontSize:'11px', fontWeight:700, color:C.saffron, background:C.saffronLight, border:'none', borderRadius:'8px', padding:'4px 10px', cursor:'pointer' }}>
@@ -827,12 +898,16 @@ export default function CustomerApp() {
     <div style={{ position:'relative' }}>
       <HomeView profile={profile} onPickup={type => { setPickupType(type); setView('confirm'); }} onViewOrders={() => setView('orders')} />
       {/* Bottom nav */}
-      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:C.cream, borderTop:`1px solid ${C.border}`, display:'flex', zIndex:100, boxShadow:'0 -2px 12px rgba(0,0,0,0.04)', maxWidth:'480px', margin:'0 auto', height:'64px' }}>
-        {[['🏠','Home',()=>setView('home'),view==='home'],['📦','Orders',()=>setView('orders'),view==='orders'],['👤','Account',()=>setView('account'),view==='account']].map(([icon,label,action,active]) => (
-          <button key={label} onClick={action}
-            style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'4px', border:'none', background:'none', cursor:'pointer', fontFamily:'DM Sans, sans-serif', color:active?C.saffron:C.stone, transition:'color 0.2s' }}>
-            <span style={{ fontSize:'22px' }}>{icon}</span>
-            <span style={{ fontSize:'10px', fontWeight:active?600:500 }}>{label}</span>
+      <div style={{ position:'fixed', bottom:0, left:0, right:0, background:C.cream, borderTop:`1px solid ${C.border}`, display:'flex', zIndex:100, boxShadow:'0 -4px 16px rgba(0,0,0,0.06)', maxWidth:'480px', margin:'0 auto', height:'70px' }}>
+        {[
+          { Icon:Home, label:'Home', action:()=>setView('home'), active:view==='home' },
+          { Icon:Package, label:'Orders', action:()=>setView('orders'), active:view==='orders' },
+          { Icon:User, label:'Account', action:()=>setView('account'), active:view==='account' }
+        ].map(item => (
+          <button key={item.label} onClick={item.action}
+            style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'5px', border:'none', background:'none', cursor:'pointer', fontFamily:'DM Sans, sans-serif', color:item.active?C.saffron:C.stone, transition:'color 0.2s', opacity:item.active?1:0.7 }}>
+            <item.Icon size={26} strokeWidth={item.active?2.2:2} fill={item.active?C.saffron:'none'} />
+            <span style={{ fontSize:'11px', fontWeight:item.active?700:500, letterSpacing:'0.3px' }}>{item.label}</span>
           </button>
         ))}
       </div>
