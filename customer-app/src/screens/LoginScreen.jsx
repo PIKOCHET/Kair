@@ -61,15 +61,15 @@ export default function LoginScreen() {
 }
 
 const S = {
-  page:    { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'24px', background:C.cream },
-  box:     { width:'100%', maxWidth:'340px', textAlign:'center' },
-  emblem:  { width:'60px', height:'60px', borderRadius:'18px', background:C.navy, margin:'0 auto 14px', position:'relative', display:'flex', alignItems:'center', justifyContent:'center' },
-  brand:   { fontFamily:'Cormorant Garamond, serif', fontSize:'34px', fontWeight:400, color:C.navy, letterSpacing:'5px', margin:'0 0 4px' },
-  tagline: { fontFamily:'Cormorant Garamond, serif', fontSize:'13px', color:C.stone, fontStyle:'italic', marginBottom:'32px' },
-  field:   { marginBottom:'12px', textAlign:'left' },
-  label:   { display:'block', fontSize:'10px', fontWeight:700, color:C.stone, textTransform:'uppercase', letterSpacing:'0.8px', marginBottom:'5px' },
-  input:   { width:'100%', padding:'12px 14px', border:`1.5px solid ${C.border}`, borderRadius:'10px', fontSize:'14px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', background:'#fff', boxSizing:'border-box' },
-  error:   { color:C.danger, fontSize:'12px', marginBottom:'10px', textAlign:'center' },
-  btn:     { width:'100%', padding:'14px', background:C.navy, color:'#fff', border:'none', borderRadius:'12px', fontSize:'14px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif', marginBottom:'8px', marginTop:'4px' },
-  ghost:   { width:'100%', padding:'8px', background:'transparent', border:'none', color:C.stone, fontSize:'12px', cursor:'pointer', fontFamily:'DM Sans, sans-serif' },
+  page:    { minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'32px', background:C.cream },
+  box:     { width:'100%', maxWidth:'380px', textAlign:'center' },
+  emblem:  { width:'72px', height:'72px', borderRadius:'20px', background:C.navy, margin:'0 auto 24px', position:'relative', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'32px', boxShadow:'0 4px 20px rgba(13,27,62,0.12)' },
+  brand:   { fontFamily:'Cormorant Garamond, serif', fontSize:'48px', fontWeight:400, color:C.navy, letterSpacing:'8px', margin:'0 0 8px', lineHeight:'1.1' },
+  tagline: { fontFamily:'Cormorant Garamond, serif', fontSize:'15px', color:C.gold, fontStyle:'italic', marginBottom:'48px', fontWeight:400 },
+  field:   { marginBottom:'18px', textAlign:'left' },
+  label:   { display:'block', fontSize:'11px', fontWeight:600, color:C.stone, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'8px' },
+  input:   { width:'100%', padding:'14px 16px', border:`1px solid ${C.border}`, borderRadius:'12px', fontSize:'14px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', background:C.cream, boxSizing:'border-box', transition:'border-color 0.2s', ':focus': { borderColor:C.saffron } },
+  error:   { color:C.danger, fontSize:'13px', marginBottom:'12px', textAlign:'center', fontFamily:'DM Sans, sans-serif' },
+  btn:     { width:'100%', padding:'16px', background:C.navy, color:'#fff', border:'none', borderRadius:'12px', fontSize:'15px', fontWeight:600, cursor:'pointer', fontFamily:'DM Sans, sans-serif', marginBottom:'12px', marginTop:'8px', letterSpacing:'0.5px', transition:'background 0.2s', boxShadow:'0 2px 12px rgba(13,27,62,0.08)' },
+  ghost:   { width:'100%', padding:'12px', background:'transparent', border:'none', color:C.stone, fontSize:'13px', cursor:'pointer', fontFamily:'DM Sans, sans-serif', fontWeight:500, letterSpacing:'0.3px' },
 };
