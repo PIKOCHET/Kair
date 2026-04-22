@@ -58,9 +58,10 @@ function ItemEntry({ order, onDone, onBack }) {
       const { error: te } = await supabase.from('garment_tags').insert(tags);
       if (te) throw te;
 
-      // 3. Update order — total, ETA, status
+      // 3. Update order — total (minus discount), ETA, status
+      const finalTotal = Math.max(0, totalPaise - (order.discount_paise || 0));
       const { error: oe } = await supabase.from('orders').update({
-        total_paise:        totalPaise,
+        total_paise:        finalTotal,
         estimated_delivery: etaDate?.toISOString().split('T')[0],
         items_confirmed:    true,
         status:             'in_cleaning',
@@ -102,6 +103,14 @@ function ItemEntry({ order, onDone, onBack }) {
           </div>
         )}
 
+        {/* Promo code applied */}
+        {order.promo_code && (
+          <div style={{ background: '#E8F5EE', borderRadius: '10px', padding: '10px', marginBottom: '10px', borderLeft: `3px solid ${C.success}` }}>
+            <div style={{ fontSize: '10px', color: C.success, fontWeight: 700, marginBottom: '4px' }}>🎁 Promo code applied: {order.promo_code}</div>
+            <div style={{ fontSize: '12px', color: C.navy }}>Discount: {fmt.rupees(order.discount_paise || 0)}</div>
+          </div>
+        )}
+
         {/* Selected summary */}
         {items.length > 0 && (
           <div style={{ background: '#fff', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '12px', marginBottom: '10px' }}>
@@ -120,9 +129,21 @@ function ItemEntry({ order, onDone, onBack }) {
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '8px', borderTop: `1px solid ${C.border}`, fontSize: '14px', fontWeight: 700, marginTop: '4px' }}>
-              <span>Total</span>
+              <span>Subtotal</span>
               <span style={{ color: C.saffron }}>{fmt.rupees(totalPaise)}</span>
             </div>
+            {order.discount_paise > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '6px', fontSize: '12px', fontWeight: 600, color: C.success }}>
+                <span>Discount ({order.promo_code})</span>
+                <span>−{fmt.rupees(order.discount_paise)}</span>
+              </div>
+            )}
+            {order.discount_paise > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '6px', borderTop: `1px solid ${C.border}`, fontSize: '14px', fontWeight: 700, color: C.navy }}>
+                <span>Final Total</span>
+                <span style={{ color: C.saffron }}>{fmt.rupees(Math.max(0, totalPaise - order.discount_paise))}</span>
+              </div>
+            )}
             {etaDate && (
               <div style={{ background: '#E5EEFF', borderRadius: '8px', padding: '7px 10px', marginTop: '8px', fontSize: '10px', color: '#1A5FBF', fontWeight: 600 }}>
                 📅 Est. delivery: {etaDate.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
