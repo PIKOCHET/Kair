@@ -206,15 +206,14 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
       .eq('is_active', true)
       .single();
     if (e || !data) { setPromoMsg('Invalid or inactive promo code'); setDiscountPaise(0); return; }
-    let discount = 0;
     if (data.discount_type === 'percentage') {
-      discount = Math.round(0); // Will be calculated with actual total
-      setPromoMsg(`✓ ${promoCode.toUpperCase()}: ${data.discount_value}% off applied`);
+      setPromoMsg(`✓ ${promoCode.toUpperCase()}: ${data.discount_value}% off (will be calculated at checkout)`);
+      setDiscountPaise(1); // Mark as applied, actual percentage discount calculated at checkout
     } else if (data.discount_type === 'fixed') {
-      discount = data.discount_value;
+      const discount = data.discount_value;
+      setDiscountPaise(discount);
       setPromoMsg(`✓ ${promoCode.toUpperCase()}: ${fmt.rupees(discount)} discount applied`);
     }
-    setDiscountPaise(discount);
   }
 
   async function confirm() {
@@ -311,7 +310,7 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
               {promoMsg}
             </div>
           )}
-          {discountPaise > 0 && (
+          {discountPaise > 0 && discountPaise !== 1 && (
             <div style={{ marginTop:'8px', fontSize:'13px', color:C.success, fontWeight:700, textAlign:'center', padding:'8px', background:C.successBg, borderRadius:'6px' }}>
               💰 Discount: {fmt.rupees(discountPaise)}
             </div>
