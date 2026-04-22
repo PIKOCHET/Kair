@@ -148,12 +148,12 @@ function ItemEntry({ order, onDone, onBack }) {
           </label>
           {uploadError && <div style={{ fontSize: '9px', color: C.danger, padding: '6px', background: C.dangerBg, borderRadius: '6px', marginBottom: '6px' }}>{uploadError}</div>}
           {uploadedImages.length > 0 && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '8px' }}>
               {uploadedImages.map((img, i) => (
-                <div key={i} style={{ position: 'relative', borderRadius: '6px', overflow: 'hidden', border: `1px solid ${C.border}` }}>
-                  <img src={img.url} alt='damage' style={{ width: '100%', height: '60px', objectFit: 'cover' }} />
+                <div key={i} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', border: `2px solid ${C.saffron}`, background: C.linen, aspectRatio: '1/1' }}>
+                  <img src={img.url} alt='damage' style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button onClick={() => removeImage(i)}
-                    style={{ position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', borderRadius: '50%', background: C.danger, color: '#fff', border: 'none', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ position: 'absolute', top: '3px', right: '3px', width: '24px', height: '24px', borderRadius: '50%', background: C.danger, color: '#fff', border: 'none', fontSize: '13px', cursor: 'pointer', fontWeight: 700 }}>
                     ✕
                   </button>
                 </div>

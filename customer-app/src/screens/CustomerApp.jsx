@@ -337,12 +337,12 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
           {uploadedImages.length > 0 && (
             <div style={{ marginTop:'10px' }}>
               <div style={{ fontSize:'10px', fontWeight:700, color:C.stone, marginBottom:'8px' }}>{uploadedImages.length} image{uploadedImages.length>1?'s':''} uploaded</div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(100px, 1fr))', gap:'10px' }}>
                 {uploadedImages.map((img, i) => (
-                  <div key={i} style={{ position:'relative', borderRadius:'8px', overflow:'hidden', border:`1px solid ${C.border}` }}>
-                    <img src={img.url} alt='uploaded' style={{ width:'100%', height:'80px', objectFit:'cover' }} />
+                  <div key={i} style={{ position:'relative', borderRadius:'10px', overflow:'hidden', border:`2px solid ${C.saffron}`, background:C.linen, aspectRatio:'1/1' }}>
+                    <img src={img.url} alt='uploaded' style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                     <button onClick={() => removeImage(i)}
-                      style={{ position:'absolute', top:'4px', right:'4px', width:'24px', height:'24px', borderRadius:'50%', background:C.danger, color:'#fff', border:'none', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      style={{ position:'absolute', top:'6px', right:'6px', width:'28px', height:'28px', borderRadius:'50%', background:C.danger, color:'#fff', border:'none', fontSize:'16px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:700 }}>
                       ✕
                     </button>
                   </div>
@@ -556,11 +556,11 @@ function OrdersView({ onBack }) {
             {order.images?.length > 0 && (
               <div style={{ marginTop:'10px', background:'#FFF3E0', borderRadius:'10px', padding:'10px', border:`1px solid ${C.saffronLight}` }}>
                 <div style={{ fontSize:'9px', fontWeight:700, color:C.saffron, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'8px' }}>📸 Photos ({order.images.length})</div>
-                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(70px, 1fr))', gap:'6px' }}>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(90px, 1fr))', gap:'8px' }}>
                   {order.images.map((img, i) => (
-                    <div key={img.id} onClick={() => setViewingImage(img)} style={{ position:'relative', borderRadius:'8px', overflow:'hidden', border:`1px solid ${C.border}`, cursor:'pointer', transition:'transform 0.2s' }}>
-                      <img src={img.image_url} alt={img.description||'order image'} style={{ width:'100%', height:'70px', objectFit:'cover' }} title={img.description} />
-                      <div style={{ fontSize:'7px', background:'rgba(0,0,0,0.6)', color:'#fff', padding:'2px 4px', position:'absolute', top:0, right:0 }}>{img.image_type}</div>
+                    <div key={img.id} onClick={() => setViewingImage(img)} style={{ position:'relative', borderRadius:'8px', overflow:'hidden', border:`1px solid ${C.border}`, cursor:'pointer', transition:'transform 0.2s', aspectRatio:'1/1', background:C.linen }}>
+                      <img src={img.image_url} alt={img.description||'order image'} style={{ width:'100%', height:'100%', objectFit:'cover' }} title={img.description} />
+                      <div style={{ fontSize:'8px', background:'rgba(0,0,0,0.7)', color:'#fff', padding:'3px 5px', position:'absolute', top:0, right:0, borderRadius:'0 8px 0 4px' }}>{img.image_type}</div>
                     </div>
                   ))}
                 </div>
@@ -647,17 +647,19 @@ function OrdersView({ onBack }) {
 
       {/* Image viewer modal */}
       {viewingImage && (
-        <div onClick={() => setViewingImage(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.95)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:300, cursor:'pointer', padding:'20px' }}>
-          <div onClick={e => e.stopPropagation()} style={{ position:'relative', maxWidth:'90%', maxHeight:'90vh' }}>
-            <img src={viewingImage.image_url} alt='full view' style={{ width:'100%', height:'100%', objectFit:'contain', borderRadius:'8px' }} />
-            <button onClick={() => setViewingImage(null)} style={{ position:'absolute', top:'-40px', right:'0px', width:'36px', height:'36px', borderRadius:'50%', background:'#fff', color:C.navy, border:'none', fontSize:'20px', cursor:'pointer', fontWeight:700 }}>✕</button>
+        <div onClick={() => setViewingImage(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.95)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', zIndex:300, cursor:'pointer', padding:'20px' }}>
+          <button onClick={() => setViewingImage(null)} style={{ position:'absolute', top:'20px', right:'20px', width:'40px', height:'40px', borderRadius:'50%', background:'#fff', color:C.navy, border:'none', fontSize:'24px', cursor:'pointer', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', zIndex:301 }}>✕</button>
+          <div onClick={e => e.stopPropagation()} style={{ position:'relative', width:'100%', maxWidth:'95vw', maxHeight:'70vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
+            <img src={viewingImage.image_url} alt='full view' style={{ maxWidth:'100%', maxHeight:'65vh', objectFit:'contain', borderRadius:'12px', marginBottom:'12px' }} />
+          </div>
+          <div style={{ width:'100%', maxWidth:'400px', marginTop:'12px' }}>
             {viewingImage.description && (
-              <div style={{ background:'rgba(0,0,0,0.8)', color:'#fff', padding:'12px 16px', marginTop:'12px', borderRadius:'8px', fontSize:'12px', textAlign:'center' }}>
-                {viewingImage.description}
+              <div style={{ background:'rgba(255,255,255,0.1)', color:'#fff', padding:'12px 16px', borderRadius:'8px', fontSize:'13px', textAlign:'center', marginBottom:'8px' }}>
+                📝 {viewingImage.description}
               </div>
             )}
-            <div style={{ background:'rgba(0,0,0,0.8)', color:'#fff', padding:'8px 12px', marginTop:'8px', borderRadius:'6px', fontSize:'10px', textAlign:'center' }}>
-              🏷️ {viewingImage.image_type}
+            <div style={{ background:'rgba(255,255,255,0.1)', color:'#fff', padding:'10px 14px', borderRadius:'8px', fontSize:'12px', textAlign:'center' }}>
+              🏷️ {viewingImage.image_type.toUpperCase()}
             </div>
           </div>
         </div>
