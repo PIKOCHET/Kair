@@ -289,7 +289,7 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
         <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
           <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>💬 Special instructions (optional)</div>
           <textarea value={specialNotes} onChange={e => setSpecialNotes(e.target.value.slice(0, 300))}
-            placeholder='E.g. Handle silk saree with care, wine stain on blue shirt sleeve, don't fold the suit jacket'
+            placeholder="E.g. Handle silk saree with care, wine stain on blue shirt sleeve, do not fold the suit jacket"
             style={{ width:'100%', padding:'10px 12px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box', minHeight:'70px', resize:'vertical' }} />
           <div style={{ fontSize:'10px', color:C.stone, textAlign:'right', marginTop:'4px' }}>{specialNotes.length} / 300</div>
         </div>
