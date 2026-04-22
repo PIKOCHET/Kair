@@ -77,10 +77,10 @@ export default function OpsApp() {
   return (
     <div style={{ fontFamily:'DM Sans, sans-serif', background:'#F5F3EF', minHeight:'100vh' }}>
       {/* Nav */}
-      <div style={{ background:C.navy, padding:'0 20px', display:'flex', alignItems:'center', justifyContent:'space-between', height:'52px', position:'sticky', top:0, zIndex:100 }}>
+      <div style={{ background:`linear-gradient(135deg, ${C.navy} 0%, #152447 100%)`, padding:'0 20px', display:'flex', alignItems:'center', justifyContent:'space-between', height:'56px', position:'sticky', top:0, zIndex:100, boxShadow:'0 4px 12px rgba(0,0,0,0.15)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-          <span style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'18px', color:'#fff', letterSpacing:'2px', fontWeight:400 }}>KAIR</span>
-          <span style={{ background:'rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.5)', fontSize:'9px', padding:'2px 7px', borderRadius:'4px', fontWeight:600 }}>OPS</span>
+          <span style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:'#fff', letterSpacing:'3px', fontWeight:400 }}>KAIR</span>
+          <span style={{ background:'rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.6)', fontSize:'9px', padding:'3px 8px', borderRadius:'5px', fontWeight:600 }}>OPS</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
           {[['orders','Orders'],['riders','Riders'],['stats','Stats']].map(([tab, label]) => (
@@ -101,7 +101,7 @@ export default function OpsApp() {
         {activeTab==='orders' && (
           <>
             {/* Stats */}
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:'8px', marginBottom:'16px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:'10px', marginBottom:'18px' }}>
               {[
                 { val:stats.pending,   lbl:'Awaiting pickup',   color:C.saffron },
                 { val:stats.active,    lbl:'In progress',       color:C.info },
@@ -110,9 +110,9 @@ export default function OpsApp() {
                 { val:stats.today,     lbl:'Orders today',      color:C.navy },
                 { val:fmt.rupees(stats.revenue), lbl:'Revenue', color:C.saffron },
               ].map((s,i) => (
-                <div key={i} style={{ background:'#fff', borderRadius:'10px', padding:'12px 14px', border:`1px solid ${C.border}` }}>
-                  <div style={{ fontSize:'20px', fontWeight:700, color:s.color, marginBottom:'2px' }}>{s.val}</div>
-                  <div style={{ fontSize:'10px', color:C.stone }}>{s.lbl}</div>
+                <div key={i} style={{ background:'#fff', borderRadius:'14px', padding:'14px 12px', border:`1px solid ${C.border}`, boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', fontWeight:700, color:s.color, marginBottom:'4px' }}>{s.val}</div>
+                  <div style={{ fontSize:'10px', color:C.stone, fontWeight:500 }}>{s.lbl}</div>
                 </div>
               ))}
             </div>
