@@ -94,6 +94,14 @@ function ItemEntry({ order, onDone, onBack }) {
       </div>
 
       <div style={{ padding: '10px 12px 110px' }}>
+        {/* Special instructions from customer */}
+        {order.special_notes && (
+          <div style={{ background: '#FFF0E8', borderRadius: '10px', padding: '10px', marginBottom: '10px', borderLeft: `3px solid ${C.saffron}` }}>
+            <div style={{ fontSize: '10px', color: C.saffron, fontWeight: 700, marginBottom: '4px' }}>📝 Customer's special instructions:</div>
+            <div style={{ fontSize: '12px', color: C.navy }}>{order.special_notes}</div>
+          </div>
+        )}
+
         {/* Selected summary */}
         {items.length > 0 && (
           <div style={{ background: '#fff', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '12px', marginBottom: '10px' }}>
@@ -196,7 +204,7 @@ export default function RiderApp() {
       : ['delivered', 'cancelled'];
 
     let q = supabase.from('orders')
-      .select('*, customer_id, address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), customer:profiles!orders_customer_id_fkey(full_name,phone)')
+      .select('*, customer_id, special_notes, address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), customer:profiles!orders_customer_id_fkey(full_name,phone)')
       .in('status', statuses)
       .order('created_at', { ascending: false });
 
@@ -346,6 +354,14 @@ export default function RiderApp() {
                   <div style={{ paddingLeft: '17px', marginTop: '2px', opacity: 0.6 }}>{order.address?.city || 'Pune'}</div>
                   <div style={{ paddingLeft: '17px', marginTop: '4px', fontSize: '9px', opacity: 0.35 }}>↗ Open in Maps</div>
                 </a>
+
+                {/* Special instructions */}
+                {order.special_notes && (
+                  <div style={{ fontSize: '10px', color: '#fff', background: 'rgba(255,255,255,0.08)', padding: '8px', borderRadius: '7px', marginBottom: '8px', borderLeft: `3px solid ${C.saffron}` }}>
+                    <div style={{ fontSize: '9px', opacity: 0.5, marginBottom: '3px' }}>📝 Special instructions:</div>
+                    <div style={{ opacity: 0.9 }}>{order.special_notes}</div>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '6px' }}>

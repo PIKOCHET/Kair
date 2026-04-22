@@ -181,18 +181,41 @@ function HomeView({ profile, onPickup, onViewOrders }) {
 // ── CONFIRM PICKUP ────────────────────────────────────────
 function ConfirmView({ pickupType, onConfirmed, onBack }) {
   const { user } = useAuth();
-  const [saved,    setSaved]    = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [flat,     setFlat]     = useState('');
-  const [area,     setArea]     = useState('');
-  const [landmark, setLandmark] = useState('');
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState('');
+  const [saved,          setSaved]          = useState([]);
+  const [selected,       setSelected]       = useState(null);
+  const [flat,           setFlat]           = useState('');
+  const [area,           setArea]           = useState('');
+  const [landmark,       setLandmark]       = useState('');
+  const [specialNotes,   setSpecialNotes]   = useState('');
+  const [promoCode,      setPromoCode]      = useState('');
+  const [discountPaise,  setDiscountPaise]  = useState(0);
+  const [promoMsg,       setPromoMsg]       = useState('');
+  const [loading,        setLoading]        = useState(false);
+  const [error,          setError]          = useState('');
 
   useEffect(() => {
     supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending:false })
       .then(({ data }) => { if (data?.length) { setSaved(data); setSelected(data[0].id); } });
   }, [user.id]);
+
+  async function applyPromoCode() {
+    if (!promoCode.trim()) { setPromoMsg(''); return; }
+    const { data, error: e } = await supabase.from('promo_codes')
+      .select('discount_type,discount_value,max_discount_paise')
+      .eq('code', promoCode.toUpperCase())
+      .eq('is_active', true)
+      .single();
+    if (e || !data) { setPromoMsg('Invalid or inactive promo code'); setDiscountPaise(0); return; }
+    let discount = 0;
+    if (data.discount_type === 'percentage') {
+      discount = Math.round(0); // Will be calculated with actual total
+      setPromoMsg(`✓ ${promoCode.toUpperCase()}: ${data.discount_value}% off applied`);
+    } else if (data.discount_type === 'fixed') {
+      discount = data.discount_value;
+      setPromoMsg(`✓ ${promoCode.toUpperCase()}: ${fmt.rupees(discount)} discount applied`);
+    }
+    setDiscountPaise(discount);
+  }
 
   async function confirm() {
     setLoading(true); setError('');
@@ -207,7 +230,7 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
         addressId = addr.id;
       }
       const { data: order, error: oe } = await supabase.from('orders')
-        .insert({ customer_id:user.id, address_id:addressId, status:'pending_pickup', pickup_type:pickupType, payment_method:'cod', payment_status:'pending', total_paise:0, language:'en' })
+        .insert({ customer_id:user.id, address_id:addressId, status:'pending_pickup', pickup_type:pickupType, payment_method:'cod', payment_status:'pending', total_paise:0, special_notes:specialNotes||null, promo_code:promoCode||null, discount_paise:discountPaise, language:'en' })
         .select().single();
       if (oe) throw oe;
       onConfirmed(order);
@@ -259,6 +282,38 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
                     style={{ width:'100%', padding:'10px 12px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box' }} />
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+
+        {/* Special instructions */}
+        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
+          <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>💬 Special instructions (optional)</div>
+          <textarea value={specialNotes} onChange={e => setSpecialNotes(e.target.value.slice(0, 300))}
+            placeholder='E.g. Handle silk saree with care, wine stain on blue shirt sleeve, don't fold the suit jacket'
+            style={{ width:'100%', padding:'10px 12px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box', minHeight:'70px', resize:'vertical' }} />
+          <div style={{ fontSize:'10px', color:C.stone, textAlign:'right', marginTop:'4px' }}>{specialNotes.length} / 300</div>
+        </div>
+
+        {/* Promo code */}
+        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
+          <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>🎁 Promo code (optional)</div>
+          <div style={{ display:'flex', gap:'8px', marginBottom:'8px' }}>
+            <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder='Enter promo code'
+              style={{ flex:1, padding:'10px 12px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box' }} />
+            <button onClick={applyPromoCode}
+              style={{ padding:'10px 16px', background:C.navy, color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+              Apply
+            </button>
+          </div>
+          {promoMsg && (
+            <div style={{ fontSize:'12px', color:promoMsg.includes('Invalid')?C.danger:C.success, fontWeight:600, padding:'6px 10px', borderRadius:'6px', background:promoMsg.includes('Invalid')?C.dangerBg:C.successBg }}>
+              {promoMsg}
+            </div>
+          )}
+          {discountPaise > 0 && (
+            <div style={{ marginTop:'8px', fontSize:'13px', color:C.success, fontWeight:700, textAlign:'center', padding:'8px', background:C.successBg, borderRadius:'6px' }}>
+              💰 Discount: {fmt.rupees(discountPaise)}
             </div>
           )}
         </div>
@@ -325,6 +380,10 @@ function OrdersView({ onBack }) {
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState('');
   const [cancelConfirm, setCancelConfirm] = useState(null);
+  const [ratingOrder, setRatingOrder] = useState(null);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingFeedback, setRatingFeedback] = useState('');
+  const [submittingRating, setSubmittingRating] = useState(false);
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
 
@@ -351,11 +410,25 @@ function OrdersView({ onBack }) {
 
   async function fetchOrders() {
     const { data } = await supabase.from('orders')
-      .select('*, address:addresses(flat_no,area), items:order_items(service_name,quantity,price_paise), tags:garment_tags(tag_code,item_name,status)')
+      .select('*, address:addresses(flat_no,area), items:order_items(service_name,quantity,price_paise), tags:garment_tags(tag_code,item_name,status), rating:order_ratings(rating,feedback)')
       .eq('customer_id', user.id)
       .order('created_at', { ascending:false });
     setOrders(data || []);
     setLoading(false);
+  }
+
+  async function submitRating(orderId) {
+    if (ratingValue === 0) { showToast('Please select a rating'); return; }
+    setSubmittingRating(true);
+    const { error } = await supabase.from('order_ratings')
+      .insert({ order_id:orderId, customer_id:user.id, rating:ratingValue, feedback:ratingFeedback||null });
+    setSubmittingRating(false);
+    if (error) { showToast('Error: ' + error.message); return; }
+    showToast('Thank you for your feedback!');
+    setRatingOrder(null);
+    setRatingValue(0);
+    setRatingFeedback('');
+    fetchOrders();
   }
 
   return (
@@ -418,6 +491,52 @@ function OrdersView({ onBack }) {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Rating (show for delivered orders without rating) */}
+            {order.status === 'delivered' && (!order.rating || order.rating.length === 0) && (
+              ratingOrder === order.id ? (
+                <div style={{ marginTop:'10px', background:C.infoBg, borderRadius:'10px', padding:'12px', border:`1px solid ${C.info}` }}>
+                  <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>How was your experience?</div>
+                  <div style={{ display:'flex', gap:'8px', justifyContent:'center', marginBottom:'12px' }}>
+                    {[1,2,3,4,5].map(star => (
+                      <button key={star} onClick={() => setRatingValue(star)}
+                        style={{ fontSize:'28px', border:'none', background:'transparent', cursor:'pointer', opacity:ratingValue>=star?1:0.3, transform:ratingValue>=star?'scale(1.1)':'scale(1)', transition:'all 0.15s' }}>
+                        ⭐
+                      </button>
+                    ))}
+                  </div>
+                  <textarea value={ratingFeedback} onChange={e => setRatingFeedback(e.target.value.slice(0, 200))}
+                    placeholder='Share your feedback (optional)'
+                    style={{ width:'100%', padding:'8px 10px', border:`1px solid ${C.border}`, borderRadius:'6px', fontSize:'12px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box', minHeight:'50px', marginBottom:'8px' }} />
+                  <div style={{ display:'flex', gap:'8px' }}>
+                    <button onClick={() => setRatingOrder(null)}
+                      style={{ flex:1, padding:'8px', border:`1px solid ${C.border}`, borderRadius:'6px', background:'#fff', fontSize:'11px', fontWeight:600, color:C.stone, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                      Skip
+                    </button>
+                    <button onClick={() => submitRating(order.id)} disabled={ratingValue===0 || submittingRating}
+                      style={{ flex:1, padding:'8px', border:'none', borderRadius:'6px', background:C.success, fontSize:'11px', fontWeight:700, color:'#fff', cursor:'pointer', fontFamily:'DM Sans, sans-serif', opacity:submittingRating?0.7:1 }}>
+                      {submittingRating ? 'Submitting...' : 'Submit'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => setRatingOrder(order.id)}
+                  style={{ width:'100%', marginTop:'10px', padding:'10px', border:`1.5px solid ${C.info}`, borderRadius:'8px', background:C.infoBg, fontSize:'12px', fontWeight:700, color:C.info, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                  ⭐ Rate your experience
+                </button>
+              )
+            )}
+
+            {/* Rating display (show if already rated) */}
+            {order.status === 'delivered' && order.rating && order.rating.length > 0 && (
+              <div style={{ marginTop:'10px', background:C.successBg, borderRadius:'10px', padding:'10px', border:`1px solid ${C.success}` }}>
+                <div style={{ fontSize:'11px', color:C.success, fontWeight:700, marginBottom:'4px' }}>✓ Your rating</div>
+                <div style={{ fontSize:'16px', letterSpacing:'2px', marginBottom:'4px' }}>
+                  {Array(order.rating[0].rating).fill('⭐').join('')}
+                </div>
+                {order.rating[0].feedback && <div style={{ fontSize:'11px', color:C.navy, fontStyle:'italic' }}>{order.rating[0].feedback}</div>}
               </div>
             )}
 
