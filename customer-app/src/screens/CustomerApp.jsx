@@ -320,29 +320,6 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
           <div style={{ fontSize:'10px', color:C.stone, textAlign:'right', marginTop:'4px' }}>{specialNotes.length} / 300</div>
         </div>
 
-        {/* Promo code */}
-        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
-          <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>🎁 Promo code (optional)</div>
-          <div style={{ display:'flex', gap:'8px', marginBottom:'8px' }}>
-            <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder='Enter promo code'
-              style={{ flex:1, padding:'10px 12px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box' }} />
-            <button onClick={applyPromoCode}
-              style={{ padding:'10px 16px', background:C.navy, color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
-              Apply
-            </button>
-          </div>
-          {promoMsg && (
-            <div style={{ fontSize:'12px', color:promoMsg.includes('Invalid')?C.danger:C.success, fontWeight:600, padding:'6px 10px', borderRadius:'6px', background:promoMsg.includes('Invalid')?C.dangerBg:C.successBg }}>
-              {promoMsg}
-            </div>
-          )}
-          {discountPaise > 0 && discountPaise !== 1 && (
-            <div style={{ marginTop:'8px', fontSize:'13px', color:C.success, fontWeight:700, textAlign:'center', padding:'8px', background:C.successBg, borderRadius:'6px' }}>
-              💰 Discount: {fmt.rupees(discountPaise)}
-            </div>
-          )}
-        </div>
-
         {/* Image upload for stains/damage */}
         <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
           <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>📸 Photos of stains/damage (optional)</div>
@@ -371,6 +348,29 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+        </div>
+
+        {/* Promo code */}
+        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
+          <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>🎁 Promo code (optional)</div>
+          <div style={{ display:'flex', gap:'8px', marginBottom:'8px' }}>
+            <input value={promoCode} onChange={e => setPromoCode(e.target.value.toUpperCase())} placeholder='Enter promo code'
+              style={{ flex:1, padding:'10px 12px', border:`1.5px solid ${C.border}`, borderRadius:'8px', fontSize:'13px', fontFamily:'DM Sans, sans-serif', color:C.navy, outline:'none', boxSizing:'border-box' }} />
+            <button onClick={applyPromoCode}
+              style={{ padding:'10px 16px', background:C.navy, color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+              Apply
+            </button>
+          </div>
+          {promoMsg && (
+            <div style={{ fontSize:'12px', color:promoMsg.includes('Invalid')?C.danger:C.success, fontWeight:600, padding:'6px 10px', borderRadius:'6px', background:promoMsg.includes('Invalid')?C.dangerBg:C.successBg }}>
+              {promoMsg}
+            </div>
+          )}
+          {discountPaise > 0 && discountPaise !== 1 && (
+            <div style={{ marginTop:'8px', fontSize:'13px', color:C.success, fontWeight:700, textAlign:'center', padding:'8px', background:C.successBg, borderRadius:'6px' }}>
+              💰 Discount: {fmt.rupees(discountPaise)}
             </div>
           )}
         </div>
@@ -441,6 +441,7 @@ function OrdersView({ onBack }) {
   const [ratingValue, setRatingValue] = useState(0);
   const [ratingFeedback, setRatingFeedback] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [viewingImage, setViewingImage] = useState(null);
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
 
@@ -557,7 +558,7 @@ function OrdersView({ onBack }) {
                 <div style={{ fontSize:'9px', fontWeight:700, color:C.saffron, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'8px' }}>📸 Photos ({order.images.length})</div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(70px, 1fr))', gap:'6px' }}>
                   {order.images.map((img, i) => (
-                    <div key={img.id} style={{ position:'relative', borderRadius:'8px', overflow:'hidden', border:`1px solid ${C.border}`, cursor:'pointer' }}>
+                    <div key={img.id} onClick={() => setViewingImage(img)} style={{ position:'relative', borderRadius:'8px', overflow:'hidden', border:`1px solid ${C.border}`, cursor:'pointer', transition:'transform 0.2s' }}>
                       <img src={img.image_url} alt={img.description||'order image'} style={{ width:'100%', height:'70px', objectFit:'cover' }} title={img.description} />
                       <div style={{ fontSize:'7px', background:'rgba(0,0,0,0.6)', color:'#fff', padding:'2px 4px', position:'absolute', top:0, right:0 }}>{img.image_type}</div>
                     </div>
@@ -643,6 +644,24 @@ function OrdersView({ onBack }) {
           </div>
         ))}
       </div>
+
+      {/* Image viewer modal */}
+      {viewingImage && (
+        <div onClick={() => setViewingImage(null)} style={{ position:'fixed', top:0, left:0, right:0, bottom:0, background:'rgba(0,0,0,0.95)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:300, cursor:'pointer', padding:'20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ position:'relative', maxWidth:'90%', maxHeight:'90vh' }}>
+            <img src={viewingImage.image_url} alt='full view' style={{ width:'100%', height:'100%', objectFit:'contain', borderRadius:'8px' }} />
+            <button onClick={() => setViewingImage(null)} style={{ position:'absolute', top:'-40px', right:'0px', width:'36px', height:'36px', borderRadius:'50%', background:'#fff', color:C.navy, border:'none', fontSize:'20px', cursor:'pointer', fontWeight:700 }}>✕</button>
+            {viewingImage.description && (
+              <div style={{ background:'rgba(0,0,0,0.8)', color:'#fff', padding:'12px 16px', marginTop:'12px', borderRadius:'8px', fontSize:'12px', textAlign:'center' }}>
+                {viewingImage.description}
+              </div>
+            )}
+            <div style={{ background:'rgba(0,0,0,0.8)', color:'#fff', padding:'8px 12px', marginTop:'8px', borderRadius:'6px', fontSize:'10px', textAlign:'center' }}>
+              🏷️ {viewingImage.image_type}
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div style={{ position:'fixed', bottom:'20px', left:'50%', transform:'translateX(-50%)', background:C.navy, color:'#fff', padding:'10px 18px', borderRadius:'10px', fontSize:'13px', fontWeight:500, zIndex:200, whiteSpace:'nowrap' }}>
