@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { C, CATALOG, fmt } from '../lib/constants';
+import { uploadOrderImage } from '../lib/imageUpload';
 
 const ALL_SVCS = Object.entries(CATALOG).map(([cat, items]) => ({ cat, items }));
 
 // ── ITEM ENTRY ─────────────────────────────────────────────
 function ItemEntry({ order, onDone, onBack }) {
-  const [cart,   setCart]   = useState({});
-  const [saving, setSaving] = useState(false);
-  const [error,  setError]  = useState('');
+  const { user } = useAuth();
+  const [cart,           setCart]           = useState({});
+  const [saving,         setSaving]         = useState(false);
+  const [error,          setError]          = useState('');
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploading,      setUploading]      = useState(false);
+  const [uploadError,    setUploadError]    = useState('');
 
   function add(svc) {
     setCart(p => ({ ...p, [svc.id]: { ...svc, qty: (p[svc.id]?.qty || 0) + 1 } }));
@@ -20,6 +25,26 @@ function ItemEntry({ order, onDone, onBack }) {
       if (qty <= 0) { const n = { ...p }; delete n[id]; return n; }
       return { ...p, [id]: { ...p[id], qty } };
     });
+  }
+
+  async function handleImageUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError('');
+    try {
+      const result = await uploadOrderImage(order.id, user.id, file, 'damage', 'Rider uploaded during pickup');
+      setUploadedImages([...uploadedImages, result]);
+    } catch (err) {
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  }
+
+  function removeImage(index) {
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
   }
 
   const items      = Object.values(cart);
@@ -110,6 +135,32 @@ function ItemEntry({ order, onDone, onBack }) {
             <div style={{ fontSize: '12px', color: C.navy }}>Discount: {fmt.rupees(order.discount_paise || 0)}</div>
           </div>
         )}
+
+        {/* Image upload for damage documentation */}
+        <div style={{ background: '#fff', borderRadius: '12px', border: `1px solid ${C.border}`, padding: '12px', marginBottom: '10px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 700, color: C.navy, marginBottom: '8px' }}>📸 Upload damage photos (optional)</div>
+          <label style={{ display: 'block', padding: '12px', border: `2px dashed ${C.border}`, borderRadius: '8px', textAlign: 'center', cursor: 'pointer', background: C.linen, marginBottom: '6px' }}>
+            <input type='file' accept='image/*' onChange={handleImageUpload} disabled={uploading} style={{ display: 'none' }} />
+            <div style={{ fontSize: '18px', marginBottom: '4px' }}>📷</div>
+            <div style={{ fontSize: '10px', fontWeight: 600, color: C.navy }}>
+              {uploading ? 'Uploading...' : 'Tap to upload'}
+            </div>
+          </label>
+          {uploadError && <div style={{ fontSize: '9px', color: C.danger, padding: '6px', background: C.dangerBg, borderRadius: '6px', marginBottom: '6px' }}>{uploadError}</div>}
+          {uploadedImages.length > 0 && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+              {uploadedImages.map((img, i) => (
+                <div key={i} style={{ position: 'relative', borderRadius: '6px', overflow: 'hidden', border: `1px solid ${C.border}` }}>
+                  <img src={img.url} alt='damage' style={{ width: '100%', height: '60px', objectFit: 'cover' }} />
+                  <button onClick={() => removeImage(i)}
+                    style={{ position: 'absolute', top: '2px', right: '2px', width: '20px', height: '20px', borderRadius: '50%', background: C.danger, color: '#fff', border: 'none', fontSize: '12px', cursor: 'pointer' }}>
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Selected summary */}
         {items.length > 0 && (

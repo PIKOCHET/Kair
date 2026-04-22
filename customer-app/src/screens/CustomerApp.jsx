@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { C, STATUS_CONFIG, CATALOG, fmt } from '../lib/constants';
+import { uploadOrderImage } from '../lib/imageUpload';
 
 // ── HELPERS ───────────────────────────────────────────────
 function StatusBadge({ status }) {
@@ -190,6 +191,9 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
   const [promoCode,      setPromoCode]      = useState('');
   const [discountPaise,  setDiscountPaise]  = useState(0);
   const [promoMsg,       setPromoMsg]       = useState('');
+  const [uploadedImages, setUploadedImages] = useState([]);
+  const [uploading,      setUploading]      = useState(false);
+  const [uploadError,    setUploadError]    = useState('');
   const [loading,        setLoading]        = useState(false);
   const [error,          setError]          = useState('');
 
@@ -214,6 +218,28 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
       setDiscountPaise(discount);
       setPromoMsg(`✓ ${promoCode.toUpperCase()}: ${fmt.rupees(discount)} discount applied`);
     }
+  }
+
+  async function handleImageUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadError('');
+    try {
+      // Create a temporary order ID for image upload (will use real order ID after creation)
+      const tempId = `temp-${Date.now()}`;
+      const result = await uploadOrderImage(tempId, user.id, file, 'stain', 'Customer uploaded image');
+      setUploadedImages([...uploadedImages, { ...result, tempId }]);
+    } catch (err) {
+      setUploadError(err.message);
+    } finally {
+      setUploading(false);
+      e.target.value = ''; // Reset input
+    }
+  }
+
+  function removeImage(index) {
+    setUploadedImages(uploadedImages.filter((_, i) => i !== index));
   }
 
   async function confirm() {
@@ -317,6 +343,38 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
           )}
         </div>
 
+        {/* Image upload for stains/damage */}
+        <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
+          <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>📸 Photos of stains/damage (optional)</div>
+          <label style={{ display:'block', padding:'20px', border:`2px dashed ${C.border}`, borderRadius:'10px', textAlign:'center', cursor:'pointer', background:C.linen, marginBottom:'8px', transition:'all 0.2s' }}>
+            <input type='file' accept='image/*' onChange={handleImageUpload} disabled={uploading} style={{ display:'none' }} />
+            <div style={{ fontSize:'24px', marginBottom:'6px' }}>📷</div>
+            <div style={{ fontSize:'12px', fontWeight:600, color:C.navy, marginBottom:'2px' }}>
+              {uploading ? 'Uploading...' : 'Tap to upload image'}
+            </div>
+            <div style={{ fontSize:'10px', color:C.stone }}>PNG, JPG up to 5MB</div>
+          </label>
+
+          {uploadError && <div style={{ fontSize:'11px', color:C.danger, padding:'8px', background:C.dangerBg, borderRadius:'6px', marginBottom:'8px' }}>⚠️ {uploadError}</div>}
+
+          {uploadedImages.length > 0 && (
+            <div style={{ marginTop:'10px' }}>
+              <div style={{ fontSize:'10px', fontWeight:700, color:C.stone, marginBottom:'8px' }}>{uploadedImages.length} image{uploadedImages.length>1?'s':''} uploaded</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
+                {uploadedImages.map((img, i) => (
+                  <div key={i} style={{ position:'relative', borderRadius:'8px', overflow:'hidden', border:`1px solid ${C.border}` }}>
+                    <img src={img.url} alt='uploaded' style={{ width:'100%', height:'80px', objectFit:'cover' }} />
+                    <button onClick={() => removeImage(i)}
+                      style={{ position:'absolute', top:'4px', right:'4px', width:'24px', height:'24px', borderRadius:'50%', background:C.danger, color:'#fff', border:'none', fontSize:'14px', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* What happens next */}
         <div style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'14px', marginBottom:'14px' }}>
           <div style={{ fontSize:'12px', fontWeight:700, color:C.navy, marginBottom:'10px' }}>What happens next</div>
@@ -409,7 +467,7 @@ function OrdersView({ onBack }) {
 
   async function fetchOrders() {
     const { data } = await supabase.from('orders')
-      .select('*, address:addresses(flat_no,area), items:order_items(service_name,quantity,price_paise), tags:garment_tags(tag_code,item_name,status), rating:order_ratings(rating,feedback)')
+      .select('*, address:addresses(flat_no,area), items:order_items(service_name,quantity,price_paise), tags:garment_tags(tag_code,item_name,status), rating:order_ratings(rating,feedback), images:order_images(id,image_url,description,image_type)')
       .eq('customer_id', user.id)
       .order('created_at', { ascending:false });
     setOrders(data || []);
@@ -487,6 +545,21 @@ function OrdersView({ onBack }) {
                       <div style={{ fontSize:'8px', fontFamily:'monospace', background:C.navy, color:'#fff', padding:'1px 5px', borderRadius:'3px', display:'inline-block', marginBottom:'2px' }}>{tag.tag_code}</div>
                       <div style={{ fontSize:'10px', fontWeight:600, color:C.navy }}>{tag.item_name}</div>
                       <div style={{ fontSize:'9px', fontWeight:700, color:['ready','packed'].includes(tag.status)?C.success:C.saffron }}>{tag.status.replace(/_/g,' ')}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Uploaded images (stains/damage) */}
+            {order.images?.length > 0 && (
+              <div style={{ marginTop:'10px', background:'#FFF3E0', borderRadius:'10px', padding:'10px', border:`1px solid ${C.saffronLight}` }}>
+                <div style={{ fontSize:'9px', fontWeight:700, color:C.saffron, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'8px' }}>📸 Photos ({order.images.length})</div>
+                <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(70px, 1fr))', gap:'6px' }}>
+                  {order.images.map((img, i) => (
+                    <div key={img.id} style={{ position:'relative', borderRadius:'8px', overflow:'hidden', border:`1px solid ${C.border}`, cursor:'pointer' }}>
+                      <img src={img.image_url} alt={img.description||'order image'} style={{ width:'100%', height:'70px', objectFit:'cover' }} title={img.description} />
+                      <div style={{ fontSize:'7px', background:'rgba(0,0,0,0.6)', color:'#fff', padding:'2px 4px', position:'absolute', top:0, right:0 }}>{img.image_type}</div>
                     </div>
                   ))}
                 </div>
