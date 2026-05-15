@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { C, CATALOG, fmt } from '../lib/constants';
 import { uploadOrderImage } from '../lib/imageUpload';
+import { assignOrderToPartner } from '../lib/routing';
 import { Camera, Gift, AlertCircle, Zap, MapPin, Bike, Check, Loader, ChevronLeft, Clock, ClipboardList } from 'lucide-react';
 
 const ALL_SVCS = Object.entries(CATALOG).map(([cat, items]) => ({ cat, items }));
@@ -90,17 +91,24 @@ function ItemEntry({ order, onDone, onBack }) {
         total_paise:        finalTotal,
         estimated_delivery: etaDate?.toISOString().split('T')[0],
         items_confirmed:    true,
-        status:             'in_cleaning',
+        status:             'picked_up', // Keep as picked_up, will transition to at_channel_partner
       }).eq('id', order.id);
       if (oe) throw oe;
 
-      // 4. Notify customer
+      // 4. Assign to nearest channel partner (new hub & spoke model)
+      const assignedPartner = await assignOrderToPartner(order.id, order.delivery_address_id);
+
+      // 5. Notify customer with appropriate message based on assignment
+      const notifMessage = assignedPartner
+        ? `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected: ${items.map(i => `${i.qty}× ${i.name}`).join(', ')} · Total ₹${(totalPaise / 100).toFixed(0)} · Safely at ${assignedPartner.name} · Est. delivery ${etaDate?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) || 'TBD'}`
+        : `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected · Total ₹${(totalPaise / 100).toFixed(0)}`;
+
       await supabase.from('notifications').insert({
         user_id:  order.customer_id,
         order_id: order.id,
         type:     'items_confirmed',
         title:    '🧺 Your items have been picked up!',
-        message:  `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected: ${items.map(i => `${i.qty}× ${i.name}`).join(', ')} · Total ₹${(totalPaise / 100).toFixed(0)} · Est. delivery ${etaDate?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) || 'TBD'}`,
+        message:  notifMessage,
         is_read:  false,
       });
 
