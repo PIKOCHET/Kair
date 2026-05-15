@@ -10,13 +10,17 @@ export default function OpsApp() {
   const { profile, signOut } = useAuth();
   const [orders,      setOrders]      = useState([]);
   const [riders,      setRiders]      = useState([]);
-  const [filter,      setFilter]      = useState('all');
-  const [search,      setSearch]      = useState('');
-  const [loading,     setLoading]     = useState(true);
-  const [toast,       setToast]       = useState('');
-  const [assignModal, setAssignModal] = useState(null);
-  const [tagModal,    setTagModal]    = useState(null);
-  const [activeTab,   setActiveTab]   = useState('orders');
+  const [filter,         setFilter]         = useState('all');
+  const [search,         setSearch]         = useState('');
+  const [loading,        setLoading]        = useState(true);
+  const [toast,          setToast]          = useState('');
+  const [assignModal,    setAssignModal]    = useState(null);
+  const [tagModal,       setTagModal]       = useState(null);
+  const [activeTab,      setActiveTab]      = useState('orders');
+  const [partners,       setPartners]       = useState([]);
+  const [batchRiders,    setBatchRiders]    = useState([]);
+  const [newPartner,     setNewPartner]     = useState({});
+  const [showNewPartner, setShowNewPartner] = useState(false);
 
   useEffect(() => {
     fetchAll();
@@ -28,12 +32,16 @@ export default function OpsApp() {
 
   async function fetchAll() {
     setLoading(true);
-    const [{ data: ord }, { data: rid }] = await Promise.all([
+    const [{ data: ord }, { data: rid }, { data: par }, { data: bat }] = await Promise.all([
       supabase.from('orders').select('*, customer:profiles!orders_customer_id_fkey(full_name,phone), rider:profiles!orders_rider_id_fkey(full_name,phone), address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), tags:garment_tags(id,tag_code,item_name,status)').order('created_at', { ascending:false }),
       supabase.from('profiles').select('*').eq('role','rider').eq('is_active',true),
+      supabase.from('channel_partners').select('*, profile:profiles(full_name)').order('created_at', { ascending:false }),
+      supabase.from('profiles').select('*').eq('role','batch_rider').eq('is_active',true),
     ]);
     setOrders(ord || []);
     setRiders(rid || []);
+    setPartners(par || []);
+    setBatchRiders(bat || []);
     setLoading(false);
   }
 
@@ -53,6 +61,39 @@ export default function OpsApp() {
   async function unassign(orderId) {
     await supabase.from('orders').update({ rider_id:null, status:'pending_pickup' }).eq('id', orderId);
     showToast('Rider unassigned'); fetchAll();
+  }
+
+  async function createPartner() {
+    if (!newPartner.name || !newPartner.area) {
+      showToast('Fill required fields');
+      return;
+    }
+    const { error } = await supabase.from('channel_partners').insert({
+      name: newPartner.name,
+      address: newPartner.address,
+      area: newPartner.area,
+      city: newPartner.city || 'Pune',
+      lat: parseFloat(newPartner.lat) || 18.5912,
+      lng: parseFloat(newPartner.lng) || 73.7997,
+      commission_paise: parseInt(newPartner.commission_paise) || 2500,
+      is_active: true,
+    });
+    if (error) showToast('Error: ' + error.message);
+    else {
+      showToast('Partner added ✓');
+      setNewPartner({});
+      setShowNewPartner(false);
+      fetchAll();
+    }
+  }
+
+  async function updatePartner(partnerId, updates) {
+    const { error } = await supabase.from('channel_partners').update(updates).eq('id', partnerId);
+    if (error) showToast('Error: ' + error.message);
+    else {
+      showToast('Partner updated ✓');
+      fetchAll();
+    }
   }
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
@@ -84,7 +125,7 @@ export default function OpsApp() {
           <span style={{ background:'rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.6)', fontSize:'9px', padding:'3px 8px', borderRadius:'5px', fontWeight:600 }}>OPS</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-          {[['orders','Orders'],['riders','Riders'],['stats','Stats']].map(([tab, label]) => (
+          {[['orders','Orders'],['riders','Riders'],['partners','Partners'],['batch','Batch'],['stats','Stats']].map(([tab, label]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{ background:'none', border:'none', cursor:'pointer', fontSize:'12px', fontWeight:600, color:activeTab===tab?'#fff':'rgba(255,255,255,0.35)', fontFamily:'DM Sans, sans-serif', padding:'4px 0', borderBottom:`2px solid ${activeTab===tab?C.saffron:'transparent'}` }}>
               {label}
@@ -228,6 +269,139 @@ export default function OpsApp() {
                 </div>
               );
             })}
+          </div>
+        )}
+
+        {/* ── CHANNEL PARTNERS TAB ── */}
+        {activeTab==='partners' && (
+          <div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'16px' }}>
+              <h2 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:500 }}>Channel Partners</h2>
+              <button onClick={() => setShowNewPartner(!showNewPartner)}
+                style={{ background:C.teal, color:'#fff', border:'none', padding:'8px 14px', borderRadius:'8px', fontSize:'12px', fontWeight:600, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                + Add Partner
+              </button>
+            </div>
+
+            {showNewPartner && (
+              <div style={{ background:'#fff', borderRadius:'12px', border:`1px solid ${C.border}`, padding:'16px', marginBottom:'16px' }}>
+                <h3 style={{ fontSize:'14px', fontWeight:600, color:C.navy, marginBottom:'12px' }}>New Channel Partner</h3>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px', marginBottom:'10px' }}>
+                  <input placeholder="Partner name" value={newPartner.name||''} onChange={e=>setNewPartner({...newPartner, name:e.target.value})}
+                    style={{ padding:'8px 12px', border:`1px solid ${C.border}`, borderRadius:'8px', fontSize:'12px', fontFamily:'DM Sans, sans-serif' }} />
+                  <input placeholder="Area (Wakad, Hinjewadi, etc)" value={newPartner.area||''} onChange={e=>setNewPartner({...newPartner, area:e.target.value})}
+                    style={{ padding:'8px 12px', border:`1px solid ${C.border}`, borderRadius:'8px', fontSize:'12px', fontFamily:'DM Sans, sans-serif' }} />
+                  <input placeholder="Address" value={newPartner.address||''} onChange={e=>setNewPartner({...newPartner, address:e.target.value})}
+                    style={{ padding:'8px 12px', border:`1px solid ${C.border}`, borderRadius:'8px', fontSize:'12px', fontFamily:'DM Sans, sans-serif', gridColumn:'1 / -1' }} />
+                  <input placeholder="Commission paise (default: 2500)" type="number" value={newPartner.commission_paise||2500} onChange={e=>setNewPartner({...newPartner, commission_paise:e.target.value})}
+                    style={{ padding:'8px 12px', border:`1px solid ${C.border}`, borderRadius:'8px', fontSize:'12px', fontFamily:'DM Sans, sans-serif' }} />
+                  <input placeholder="Lat" type="number" step="0.0001" value={newPartner.lat||''} onChange={e=>setNewPartner({...newPartner, lat:e.target.value})}
+                    style={{ padding:'8px 12px', border:`1px solid ${C.border}`, borderRadius:'8px', fontSize:'12px', fontFamily:'DM Sans, sans-serif' }} />
+                  <input placeholder="Lng" type="number" step="0.0001" value={newPartner.lng||''} onChange={e=>setNewPartner({...newPartner, lng:e.target.value})}
+                    style={{ padding:'8px 12px', border:`1px solid ${C.border}`, borderRadius:'8px', fontSize:'12px', fontFamily:'DM Sans, sans-serif' }} />
+                </div>
+                <div style={{ display:'flex', gap:'8px' }}>
+                  <button onClick={createPartner} style={{ flex:1, background:C.teal, color:'#fff', border:'none', padding:'10px', borderRadius:'8px', fontSize:'12px', fontWeight:600, cursor:'pointer' }}>Create</button>
+                  <button onClick={() => { setShowNewPartner(false); setNewPartner({}); }} style={{ flex:1, background:C.border, color:C.stone, border:'none', padding:'10px', borderRadius:'8px', fontSize:'12px', fontWeight:600, cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            )}
+
+            {partners.length === 0 ? (
+              <div style={{ textAlign:'center', padding:'60px', color:C.stone }}>
+                <div style={{ fontSize:'32px', marginBottom:'8px' }}>📍</div>
+                <p>No channel partners yet. Create one to get started.</p>
+              </div>
+            ) : (
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(280px, 1fr))', gap:'12px' }}>
+                {partners.map(partner => {
+                  const partnerOrders = orders.filter(o => o.channel_partner_id === partner.id);
+                  const todayOrders = partnerOrders.filter(o => new Date(o.at_partner_at).toDateString() === new Date().toDateString());
+                  const commission = partnerOrders.length * (partner.commission_paise || 2500);
+                  return (
+                    <div key={partner.id} style={{ background:'#fff', borderRadius:'12px', border:`1px solid ${C.border}`, padding:'14px' }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:'10px' }}>
+                        <div>
+                          <div style={{ fontSize:'13px', fontWeight:700, color:C.navy }}>{partner.name}</div>
+                          <div style={{ fontSize:'10px', color:C.stone, marginTop:'2px' }}>📍 {partner.area}</div>
+                        </div>
+                        <div style={{ background:partner.is_active ? C.successBg : '#fef2f2', color:partner.is_active ? C.success : C.danger, fontSize:'8px', fontWeight:700, padding:'3px 7px', borderRadius:'6px' }}>
+                          {partner.is_active ? '● Active' : '● Inactive'}
+                        </div>
+                      </div>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'10px' }}>
+                        <div style={{ background:C.tealLight, borderRadius:'8px', padding:'8px', textAlign:'center' }}>
+                          <div style={{ fontSize:'14px', fontWeight:600, color:C.teal }}>{todayOrders.length}</div>
+                          <div style={{ fontSize:'9px', color:C.stone }}>Today</div>
+                        </div>
+                        <div style={{ background:C.linen, borderRadius:'8px', padding:'8px', textAlign:'center' }}>
+                          <div style={{ fontSize:'14px', fontWeight:600, color:C.saffron }}>{fmt.rupees(partner.commission_paise)}</div>
+                          <div style={{ fontSize:'9px', color:C.stone }}>Per order</div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize:'10px', color:C.stone, textAlign:'center', paddingTop:'8px', borderTop:`1px solid ${C.border}` }}>
+                        Total commission: {fmt.rupees(commission)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── BATCH RUNS TAB ── */}
+        {activeTab==='batch' && (
+          <div>
+            <h2 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:500, marginBottom:'16px' }}>Batch Runs</h2>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:'10px', marginBottom:'20px' }}>
+              {[
+                { val:partners.length, lbl:'Active Partners', color:C.teal },
+                { val:batchRiders.length, lbl:'Batch Riders', color:C.info },
+                { val:orders.filter(o => o.status === 'at_channel_partner').length, lbl:'Orders at Partners', color:C.saffron },
+                { val:orders.filter(o => o.status === 'in_transit_to_workshop').length, lbl:'In Transit', color:C.navy },
+              ].map((s, i) => (
+                <div key={i} style={{ background:'#fff', borderRadius:'12px', padding:'14px', border:`1px solid ${C.border}` }}>
+                  <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', fontWeight:700, color:s.color, marginBottom:'4px' }}>{s.val}</div>
+                  <div style={{ fontSize:'11px', color:C.stone }}>{s.lbl}</div>
+                </div>
+              ))}
+            </div>
+
+            <h3 style={{ fontSize:'14px', fontWeight:700, color:C.navy, marginBottom:'12px' }}>Today's Collection Routes</h3>
+            {batchRiders.length === 0 ? (
+              <div style={{ background:'#fff', borderRadius:'12px', padding:'32px', textAlign:'center', border:`1px solid ${C.border}`, color:C.stone }}>
+                <div style={{ fontSize:'32px', marginBottom:'8px' }}>🚐</div>
+                <p>No batch riders available. Create batch rider accounts to start collection routes.</p>
+              </div>
+            ) : (
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(320px, 1fr))', gap:'12px' }}>
+                {batchRiders.map(rider => {
+                  const partnerCount = partners.length;
+                  const ordersToCollect = orders.filter(o => o.status === 'at_channel_partner').length;
+                  return (
+                    <div key={rider.id} style={{ background:'#fff', borderRadius:'12px', border:`1px solid ${C.border}`, padding:'16px' }}>
+                      <div style={{ fontSize:'13px', fontWeight:700, color:C.navy, marginBottom:'12px' }}>
+                        🚐 {rider.full_name || 'Batch Rider'}
+                      </div>
+                      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px', marginBottom:'12px' }}>
+                        <div style={{ background:C.tealLight, borderRadius:'8px', padding:'10px', textAlign:'center' }}>
+                          <div style={{ fontSize:'16px', fontWeight:600, color:C.teal }}>{partnerCount}</div>
+                          <div style={{ fontSize:'9px', color:C.stone }}>Partners</div>
+                        </div>
+                        <div style={{ background:C.saffronLight, borderRadius:'8px', padding:'10px', textAlign:'center' }}>
+                          <div style={{ fontSize:'16px', fontWeight:600, color:C.saffron }}>{ordersToCollect}</div>
+                          <div style={{ fontSize:'9px', color:C.stone }}>Orders</div>
+                        </div>
+                      </div>
+                      <button style={{ width:'100%', padding:'10px', background:C.teal, color:'#fff', border:'none', borderRadius:'8px', fontSize:'11px', fontWeight:600, cursor:'pointer' }}>
+                        Start Route
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
