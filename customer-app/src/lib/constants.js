@@ -16,18 +16,23 @@ export const C = {
   infoBg:      '#E5EEFF',
   danger:      '#D32F2F',
   dangerBg:    '#FDEAEA',
+  teal:        '#0D7377',
+  tealLight:   '#E0F4F6',
 };
 
 export const STATUS_CONFIG = {
-  pending_pickup:   { label:'Awaiting pickup',  color:C.saffron, bg:C.saffronLight },
-  rider_assigned:   { label:'Rider assigned',   color:C.info,    bg:C.infoBg },
-  picked_up:        { label:'Picked up ✓',      color:C.info,    bg:C.infoBg },
-  in_cleaning:      { label:'In cleaning',      color:C.info,    bg:C.infoBg },
-  quality_check:    { label:'Quality check',    color:C.success, bg:C.successBg },
-  ready:            { label:'Ready ✨',          color:C.success, bg:C.successBg },
-  out_for_delivery: { label:'Out for delivery', color:C.saffron, bg:C.saffronLight },
-  delivered:        { label:'Delivered ✓',      color:C.stone,   bg:C.linen },
-  cancelled:        { label:'Cancelled',         color:C.danger,  bg:C.dangerBg },
+  pending_pickup:        { label:'Awaiting pickup',      color:C.saffron, bg:C.saffronLight },
+  rider_assigned:        { label:'Rider assigned',       color:C.info,    bg:C.infoBg },
+  picked_up:             { label:'Picked up ✓',          color:C.info,    bg:C.infoBg },
+  at_channel_partner:    { label:'At collection point',  color:C.teal,    bg:C.tealLight }, // ⭐ NEW
+  in_transit_to_workshop:{ label:'In transit',           color:C.teal,    bg:C.tealLight }, // ⭐ NEW
+  in_cleaning:           { label:'In cleaning',          color:C.info,    bg:C.infoBg },
+  quality_check:         { label:'Quality check',        color:C.success, bg:C.successBg },
+  ready:                 { label:'Ready ✨',              color:C.success, bg:C.successBg },
+  dispatched_to_partner: { label:'Dispatched to partner', color:C.teal,    bg:C.tealLight }, // ⭐ NEW
+  out_for_delivery:      { label:'Out for delivery',     color:C.saffron, bg:C.saffronLight },
+  delivered:             { label:'Delivered ✓',          color:C.stone,   bg:C.linen },
+  cancelled:             { label:'Cancelled',             color:C.danger,  bg:C.dangerBg },
 };
 
 export const TAG_STATUSES = ['received','sorting','in_cleaning','drying','pressed','quality_check','ready','packed'];
