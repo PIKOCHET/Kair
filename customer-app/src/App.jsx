@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import CustomerApp from './screens/CustomerApp';
 import RiderApp    from './screens/RiderApp';
+import ChannelPartnerApp from './screens/ChannelPartnerScreens';
+import BatchRiderApp from './screens/BatchRiderScreens';
 import OpsApp      from './screens/OpsApp';
 
 function AppRouter() {
@@ -18,6 +20,8 @@ function AppRouter() {
   if (!isLoggedIn) return <LoginScreen />;
   if (role === 'admin') return <OpsApp />;
   if (role === 'rider') return <RiderApp />;
+  if (role === 'channel_partner') return <ChannelPartnerApp />;
+  if (role === 'batch_rider') return <BatchRiderApp />;
   return <CustomerApp />;
 }
 
