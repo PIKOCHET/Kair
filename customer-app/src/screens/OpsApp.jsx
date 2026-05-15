@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { C, STATUS_CONFIG, TAG_STATUSES, fmt } from '../lib/constants';
+import SettlementDashboard from '../components/SettlementDashboard';
 import { Bike, Zap, MapPin, Tag, Map, ChevronUp, ChevronDown, X } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -125,7 +126,7 @@ export default function OpsApp() {
           <span style={{ background:'rgba(255,255,255,0.12)', color:'rgba(255,255,255,0.6)', fontSize:'9px', padding:'3px 8px', borderRadius:'5px', fontWeight:600 }}>OPS</span>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:'12px' }}>
-          {[['orders','Orders'],['riders','Riders'],['partners','Partners'],['batch','Batch'],['stats','Stats']].map(([tab, label]) => (
+          {[['orders','Orders'],['riders','Riders'],['partners','Partners'],['batch','Batch'],['settlement','Settlement'],['stats','Stats']].map(([tab, label]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
               style={{ background:'none', border:'none', cursor:'pointer', fontSize:'12px', fontWeight:600, color:activeTab===tab?'#fff':'rgba(255,255,255,0.35)', fontFamily:'DM Sans, sans-serif', padding:'4px 0', borderBottom:`2px solid ${activeTab===tab?C.saffron:'transparent'}` }}>
               {label}
@@ -234,6 +235,11 @@ export default function OpsApp() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ── SETTLEMENT TAB ── */}
+        {activeTab==='settlement' && (
+          <SettlementDashboard />
         )}
 
         {/* ── STATS TAB ── */}
