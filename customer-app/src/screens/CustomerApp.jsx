@@ -71,51 +71,103 @@ function HomeView({ profile, onPickup, onViewOrders }) {
 
   return (
     <div style={{ background:C.cream, minHeight:'100vh', paddingBottom:'70px' }}>
-      {/* Nav */}
-      <div style={{ background:`linear-gradient(135deg, ${C.navy} 0%, #152447 100%)`, padding:'16px 20px 12px', boxShadow:'0 2px 8px rgba(13,27,62,0.08)' }}>
+      {/* Luxury Header */}
+      <div style={{ background:C.navy, padding:'14px 20px 12px', boxShadow:'0 2px 8px rgba(13,27,62,0.08)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
-          <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
-            <div style={{ width:'40px', height:'40px', background:C.saffron, borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <Smartphone color='#fff' size={20} strokeWidth={2.5} />
-            </div>
-            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'22px', color:'#fff', fontWeight:400, letterSpacing:'4px', lineHeight:1 }}>KAIR</div>
-          </div>
-          <div style={{ display:'flex', alignItems:'center', gap:'8px', background:'rgba(255,255,255,0.08)', borderRadius:'20px', padding:'6px 12px', fontSize:'11px', color:'rgba(255,255,255,0.5)', fontWeight:500 }}>
-            <MapPin size={14} strokeWidth={2.5} />
-            Pune
-          </div>
+          <button style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'20px', display:'flex', alignItems:'center', justifyContent:'center' }}>☰</button>
+          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', color:'#fff', fontWeight:400, letterSpacing:'4px', textAlign:'center', flex:1 }}>KAIR</div>
+          <button style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'18px', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>🔔<span style={{ position:'absolute', top:'-4px', right:'-4px', width:'18px', height:'18px', borderRadius:'50%', background:C.saffron, color:'#fff', fontSize:'10px', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>{activeOrders.length}</span></button>
         </div>
-        <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'18px', color:'#fff', fontStyle:'italic', fontWeight:400 }}>
-          {greeting()}, <span style={{ fontWeight:600 }}>{profile?.full_name?.split(' ')[0] || 'there'}</span>
+        <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.6)', fontWeight:500, display:'flex', alignItems:'center', gap:'4px' }}>📍 CURRENT LOCATION</div>
+      </div>
+
+      {/* Greeting Section */}
+      <div style={{ background:C.cream, padding:'24px 20px 20px' }}>
+        <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'28px', color:C.navy, fontStyle:'italic', fontWeight:400, marginBottom:'6px', lineHeight:1.2 }}>{greeting()}, <strong>{profile?.full_name?.split(' ')[0] || 'there'}</strong></div>
+        <div style={{ fontSize:'13px', color:C.stone, fontFamily:'DM Sans, sans-serif' }}>Your wardrobe is in artisan hands today.</div>
+      </div>
+
+      {/* Luxury Hero Card */}
+      <div style={{ padding:'0 20px', marginBottom:'24px' }}>
+        <div style={{ background:C.navy, borderRadius:'20px', padding:'28px 20px', position:'relative', overflow:'hidden' }}>
+          <div style={{ position:'absolute', top:'20px', left:'20px', width:'40px', height:'3px', background:C.gold, borderRadius:'2px' }} />
+          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'26px', color:'#fff', fontStyle:'italic', fontWeight:400, lineHeight:1.2, marginTop:'12px', marginBottom:'8px' }}>Artisan Care for your Wardrobe</div>
+          <div style={{ fontSize:'9px', color:C.gold, fontWeight:700, letterSpacing:'3px', textTransform:'uppercase' }}>Premium Logistics</div>
         </div>
       </div>
 
-      {/* Pickup hero */}
-      <div style={{ background:C.navy, padding:'0 20px 20px' }}>
-        <div style={{ background:'linear-gradient(135deg,#152447,#1e3460)', borderRadius:'24px', padding:'28px 20px', border:'1px solid rgba(200,169,110,0.18)', boxShadow:'0 8px 28px rgba(13,27,62,0.16)' }}>
-          <div style={{ fontSize:'9px', fontWeight:700, color:C.gold, textTransform:'uppercase', letterSpacing:'2px', marginBottom:'12px' }}>Premium garment care · Pune</div>
-          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'28px', color:'#fff', fontWeight:400, marginBottom:'6px', lineHeight:1.2 }}>Ready for a pickup?</div>
-          <div style={{ fontSize:'11px', color:'rgba(255,255,255,0.45)', marginBottom:'24px', fontFamily:'DM Sans, sans-serif' }}>We'll be at your door within 1 hour</div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
-            {[
-              { type:'standard', Icon:Clock, title:'Standard', sub:'Within 1 hour', bg:'#fff', color:C.navy, border:'none' },
-              { type:'urgent',   Icon:Zap,   title:'Urgent',   sub:'Priority pickup', bg:C.saffron, color:'#fff', border:'none' },
-            ].map(btn => (
-              <button key={btn.type} onClick={() => onPickup(btn.type)}
-                style={{ borderRadius:'14px', padding:'24px 14px', border:btn.border, minHeight:'88px', cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px', fontFamily:'DM Sans, sans-serif', background:btn.bg, color:btn.color, transition:'all 0.2s', boxShadow:btn.bg==='#fff'?'0 4px 16px rgba(0,0,0,0.08)':'none' }}>
-                <btn.Icon size={32} strokeWidth={2.2} />
-                <span style={{ fontSize:'15px', fontWeight:700 }}>{btn.title}</span>
-                <span style={{ fontSize:'11px', opacity:0.7 }}>{btn.sub}</span>
-              </button>
-            ))}
+      {/* Stats Bento Grid */}
+      <div style={{ padding:'0 20px', marginBottom:'24px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+        <div style={{ background:C.linen, borderRadius:'16px', padding:'16px', display:'flex', flexDirection:'column', justifyContent:'space-between', minHeight:'140px' }}>
+          <div>
+            <div style={{ fontSize:'10px', fontWeight:600, color:C.stone, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'8px' }}>Active Orders</div>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'32px', color:C.navy, fontWeight:400 }}>02</div>
+          </div>
+          <div style={{ fontSize:'24px', opacity:0.3, textAlign:'right' }}>📦</div>
+        </div>
+        <div style={{ background:C.navy, borderRadius:'16px', padding:'16px', display:'flex', flexDirection:'column', justifyContent:'space-between', minHeight:'140px' }}>
+          <div>
+            <div style={{ fontSize:'10px', fontWeight:600, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:'1px', marginBottom:'8px' }}>Tier Status</div>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'28px', color:'#fff', fontWeight:400 }}>Gold</div>
+          </div>
+          <div style={{ fontSize:'24px', opacity:0.3, textAlign:'right' }}>⭐</div>
+        </div>
+      </div>
+
+      {/* Request Pickup Section */}
+      <div style={{ padding:'0 20px', marginBottom:'20px' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:'12px' }}>
+          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', color:C.navy, fontWeight:400 }}>Request Pickup</div>
+          <div style={{ fontSize:'10px', color:C.saffron, fontWeight:700, letterSpacing:'1px', textTransform:'uppercase' }}>VIEW RATES</div>
+        </div>
+      </div>
+
+      <div style={{ padding:'0 20px', marginBottom:'24px', display:'flex', flexDirection:'column', gap:'12px' }}>
+        {/* Standard Card */}
+        <button onClick={() => onPickup('standard')} style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${C.border}`, padding:'16px', cursor:'pointer', display:'flex', alignItems:'center', gap:'14px', transition:'all 0.2s' }}>
+          <div style={{ width:'48px', height:'48px', borderRadius:'50%', background:C.linen, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', flexShrink:0 }}>🚗</div>
+          <div style={{ flex:1, textAlign:'left' }}>
+            <div style={{ fontSize:'16px', fontWeight:700, color:C.navy, fontFamily:'DM Sans, sans-serif' }}>Standard</div>
+            <div style={{ fontSize:'12px', color:C.stone, fontStyle:'italic', fontFamily:'DM Sans, sans-serif' }}>2-3 Business Days</div>
+          </div>
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:400 }}>₹348</div>
+            <button style={{ background:C.saffron, color:'#fff', border:'none', padding:'6px 14px', borderRadius:'20px', fontSize:'11px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif', marginTop:'4px' }}>BOOK</button>
+          </div>
+        </button>
+
+        {/* Urgent Card */}
+        <button onClick={() => onPickup('urgent')} style={{ background:'#fff', borderRadius:'14px', border:`1.5px solid ${C.saffron}`, padding:'16px', cursor:'pointer', display:'flex', alignItems:'center', gap:'14px', transition:'all 0.2s', position:'relative' }}>
+          <div style={{ position:'absolute', top:'-8px', right:'16px', background:C.saffron, color:'#fff', fontSize:'8px', fontWeight:700, padding:'3px 8px', borderRadius:'4px', textTransform:'uppercase', letterSpacing:'0.5px' }}>Most Preferred</div>
+          <div style={{ width:'48px', height:'48px', borderRadius:'50%', background:C.saffron, display:'flex', alignItems:'center', justifyContent:'center', fontSize:'22px', flexShrink:0 }}>⚡</div>
+          <div style={{ flex:1, textAlign:'left' }}>
+            <div style={{ fontSize:'16px', fontWeight:700, color:C.navy, fontFamily:'DM Sans, sans-serif' }}>Urgent</div>
+            <div style={{ fontSize:'12px', color:C.stone, fontStyle:'italic', fontFamily:'DM Sans, sans-serif' }}>Same Day Delivery</div>
+          </div>
+          <div style={{ textAlign:'right' }}>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:400 }}>₹749</div>
+            <button style={{ background:C.saffron, color:'#fff', border:'none', padding:'6px 14px', borderRadius:'20px', fontSize:'11px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif', marginTop:'4px' }}>BOOK</button>
+          </div>
+        </button>
+      </div>
+
+      {/* Care Guide Section */}
+      <div style={{ padding:'0 20px', marginBottom:'24px' }}>
+        <div style={{ borderRadius:'16px', overflow:'hidden', background:C.navy, minHeight:'240px', display:'flex', alignItems:'flex-end' }}>
+          <div style={{ padding:'20px', color:'#fff', zIndex:1, width:'100%' }}>
+            <div style={{ fontSize:'10px', color:C.gold, fontWeight:700, letterSpacing:'2px', textTransform:'uppercase', marginBottom:'8px' }}>Care Guide</div>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'22px', color:'#fff', fontWeight:400, marginBottom:'8px' }}>Preserving Silk & Linen</div>
+            <div style={{ fontSize:'13px', color:'rgba(255,255,255,0.8)', lineHeight:1.5, marginBottom:'12px' }}>Silk requires gentle handling and cool water washing. Always dry in shade to preserve color and texture.</div>
+            <div style={{ fontSize:'11px', color:C.gold, fontWeight:600, cursor:'pointer' }}>READ MORE →</div>
           </div>
         </div>
       </div>
 
-      <div style={{ padding:'14px 16px' }}>
+      <div style={{ padding:'0 20px' }}>
         {/* Active orders */}
         {activeOrders.length > 0 && (
-          <div style={{ marginBottom:'16px' }}>
+          <div style={{ marginBottom:'24px' }}>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:400, marginBottom:'12px' }}>Active Orders</div>
             {activeOrders.map(order => (
               <div key={order.id} onClick={onViewOrders}
                 style={{ background:'#fff', borderRadius:'16px', border:`1px solid ${C.border}`, padding:'16px', marginBottom:'10px', cursor:'pointer', boxShadow:'0 2px 12px rgba(0,0,0,0.06)', transition:'all 0.2s' }}>
