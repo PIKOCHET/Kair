@@ -133,8 +133,15 @@ export default function OpsApp() {
               {tab==='orders' && stats.pending > 0 && <span style={{ background:C.saffron, color:'#fff', fontSize:'8px', fontWeight:700, width:'14px', height:'14px', borderRadius:'50%', display:'inline-flex', alignItems:'center', justifyContent:'center', marginLeft:'4px' }}>{stats.pending}</span>}
             </button>
           ))}
-          <span style={{ fontSize:'11px', color:'rgba(255,255,255,0.4)' }}>{profile?.full_name}</span>
-          <button onClick={signOut} style={{ background:'rgba(255,255,255,0.07)', border:'none', color:'rgba(255,255,255,0.5)', fontSize:'11px', padding:'5px 10px', borderRadius:'6px', cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>Sign out</button>
+          <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+            <span style={{ fontSize:'12px', color:'rgba(255,255,255,0.6)', fontFamily:'DM Sans, sans-serif', maxWidth:'100px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              {profile?.full_name || 'Admin'}
+            </span>
+            <button onClick={() => supabase.auth.signOut()}
+              style={{ fontSize:'11px', fontWeight:'600', color:'rgba(255,255,255,0.8)', background:'rgba(255,255,255,0.1)', border:'1px solid rgba(255,255,255,0.25)', borderRadius:'20px', padding:'5px 14px', cursor:'pointer', fontFamily:'DM Sans, sans-serif', letterSpacing:'0.3px' }}>
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
 
@@ -154,7 +161,7 @@ export default function OpsApp() {
                 { val:fmt.rupees(stats.revenue), lbl:'Revenue', color:C.saffron },
               ].map((s,i) => (
                 <div key={i} style={{ background:'#fff', borderRadius:'14px', padding:'14px 12px', border:`1px solid ${C.border}`, boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
-                  <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', fontWeight:700, color:s.color, marginBottom:'4px' }}>{s.val}</div>
+                  <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'32px', fontWeight:700, color:s.color, marginBottom:'4px' }}>{s.val}</div>
                   <div style={{ fontSize:'10px', color:C.stone, fontWeight:500 }}>{s.lbl}</div>
                 </div>
               ))}
@@ -256,7 +263,7 @@ export default function OpsApp() {
                 { val:orders.filter(o=>o.pickup_type!=='urgent').length, lbl:'Standard pickups', color:C.stone },
               ].map((s,i) => (
                 <div key={i} style={{ background:'#fff', borderRadius:'12px', padding:'14px 16px', border:`1px solid ${C.border}` }}>
-                  <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'26px', fontWeight:500, color:s.color, marginBottom:'4px' }}>{s.val}</div>
+                  <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'32px', fontWeight:700, color:s.color, marginBottom:'4px' }}>{s.val}</div>
                   <div style={{ fontSize:'11px', color:C.stone }}>{s.lbl}</div>
                 </div>
               ))}
@@ -271,7 +278,7 @@ export default function OpsApp() {
                   <div style={{ flex:1, background:C.linen, borderRadius:'4px', height:'8px', overflow:'hidden' }}>
                     <div style={{ width:`${Math.min(100,(cnt/Math.max(orders.length,1))*100)}%`, height:'100%', background:sc.color, borderRadius:'4px', transition:'width 0.5s' }} />
                   </div>
-                  <span style={{ fontSize:'15px', fontWeight:700, color:C.navy, minWidth:'28px', textAlign:'right' }}>{cnt}</span>
+                  <span style={{ fontFamily:'DM Sans, sans-serif', fontSize:'16px', fontWeight:700, color:C.navy, minWidth:'28px', textAlign:'right' }}>{cnt}</span>
                 </div>
               );
             })}
