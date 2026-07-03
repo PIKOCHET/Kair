@@ -24,8 +24,8 @@ export const STATUS_CONFIG = {
   pending_pickup:        { label:'Awaiting pickup',      color:C.saffron, bg:C.saffronLight },
   rider_assigned:        { label:'Rider assigned',       color:C.info,    bg:C.infoBg },
   picked_up:             { label:'Picked up ✓',          color:C.info,    bg:C.infoBg },
-  at_channel_partner:    { label:'At collection point',  color:C.teal,    bg:C.tealLight }, // ⭐ NEW
-  in_transit_to_workshop:{ label:'In transit',           color:C.teal,    bg:C.tealLight }, // ⭐ NEW
+  at_channel_partner:    { label:'At collection centre', color:'#0D7377', bg:C.tealLight,    icon:'🏪', desc:'Safely stored at our local collection point' }, // ⭐ NEW
+  in_transit_to_workshop:{ label:'Heading to workshop',  color:'#D97706', bg:C.saffronLight, icon:'🚐', desc:'Batch rider collecting for workshop' }, // ⭐ NEW
   in_cleaning:           { label:'In cleaning',          color:C.info,    bg:C.infoBg },
   quality_check:         { label:'Quality check',        color:C.success, bg:C.successBg },
   ready:                 { label:'Ready ✨',              color:C.success, bg:C.successBg },

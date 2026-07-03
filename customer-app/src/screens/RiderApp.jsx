@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { C, CATALOG, fmt } from '../lib/constants';
 import { uploadOrderImage } from '../lib/imageUpload';
 import { assignOrderToPartner } from '../lib/routing';
-import { Camera, Gift, AlertCircle, Zap, MapPin, Bike, Check, Loader, ChevronLeft, Clock, ClipboardList } from 'lucide-react';
+import { Camera, Gift, AlertCircle, Zap, MapPin, Bike, Check, Loader, ChevronLeft, Clock, ClipboardList, X, Store } from 'lucide-react';
 
 const ALL_SVCS = Object.entries(CATALOG).map(([cat, items]) => ({ cat, items }));
 
@@ -287,14 +287,138 @@ function ItemEntry({ order, onDone, onBack }) {
   );
 }
 
+// ── DROP AT CHANNEL PARTNER ──────────────────────────────────
+function PartnerDropModal({ order, onClose, onDropped }) {
+  const [partners,        setPartners]        = useState([]);
+  const [loading,         setLoading]         = useState(true);
+  const [selectedPartner, setSelectedPartner] = useState(null);
+  const [dropping,        setDropping]        = useState(false);
+  const [error,           setError]           = useState('');
+
+  useEffect(() => {
+    supabase.from('channel_partners')
+      .select('*, profile:profiles!channel_partners_profile_id_fkey(full_name)')
+      .eq('is_active', true)
+      .eq('city', 'Pune')
+      .then(({ data }) => { setPartners(data || []); setLoading(false); });
+  }, []);
+
+  async function confirmDrop() {
+    if (!selectedPartner) return;
+    setDropping(true); setError('');
+    try {
+      const { error: oe } = await supabase.from('orders').update({
+        channel_partner_id: selectedPartner.id,
+        status:             'at_channel_partner',
+        at_partner_at:      new Date().toISOString(),
+      }).eq('id', order.id);
+      if (oe) throw oe;
+
+      const { error: te } = await supabase.from('partner_transactions').insert({
+        channel_partner_id: selectedPartner.id,
+        order_id:           order.id,
+        type:                'received',
+        commission_paise:   selectedPartner.commission_paise || 2500,
+      });
+      if (te) throw te;
+
+      await supabase.from('notifications').insert([
+        {
+          user_id:  selectedPartner.profile_id,
+          order_id: order.id,
+          type:     'order_received',
+          title:    'New order received',
+          message:  `Order ${order.order_number} dropped by rider. Please acknowledge.`,
+          is_read:  false,
+        },
+        {
+          user_id:  order.customer_id,
+          order_id: order.id,
+          type:     'at_partner',
+          title:    'Clothes at collection centre',
+          message:  `Your clothes are safely at our ${selectedPartner.name} collection centre and will reach the workshop tonight.`,
+          is_read:  false,
+        },
+      ]);
+
+      onDropped();
+    } catch (e) {
+      setError(e.message);
+      setDropping(false);
+    }
+  }
+
+  return (
+    <div style={{ position:'fixed', inset:0, background:'rgba(13,27,62,0.6)', zIndex:300, display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+      <div style={{ background:'#fff', width:'100%', maxWidth:'480px', borderRadius: selectedPartner ? '20px' : '20px 20px 0 0', maxHeight:'85vh', overflow:'hidden', display:'flex', flexDirection:'column', margin: selectedPartner ? 'auto 0' : '0' }}>
+        {!selectedPartner ? (
+          <>
+            <div style={{ padding:'18px 20px', borderBottom:`1px solid ${C.border}`, position:'relative' }}>
+              <div style={{ width:'40px', height:'4px', background:C.border, borderRadius:'2px', margin:'0 auto 14px' }} />
+              <h3 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:500 }}>Select Collection Point</h3>
+              <p style={{ fontSize:'12px', color:C.stone, marginTop:'2px' }}>Choose the nearest Kair partner</p>
+              <button onClick={onClose} style={{ position:'absolute', top:'14px', right:'16px', width:'32px', height:'32px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <X size={16} strokeWidth={2.5} color={C.navy} />
+              </button>
+            </div>
+            <div style={{ flex:1, overflowY:'auto', padding:'14px 20px' }}>
+              {loading && <div style={{ textAlign:'center', padding:'40px', color:C.stone }}>Loading partners...</div>}
+              {!loading && partners.length === 0 && (
+                <div style={{ textAlign:'center', padding:'40px', color:C.stone }}>
+                  <div style={{ fontSize:'32px', marginBottom:'8px' }}>🏪</div>
+                  No active partners found in Pune.
+                </div>
+              )}
+              {partners.map(partner => (
+                <div key={partner.id} style={{ display:'flex', alignItems:'center', gap:'12px', padding:'14px', borderRadius:'14px', border:`1px solid ${C.border}`, marginBottom:'10px' }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:'14px', fontWeight:700, color:C.navy }}>{partner.name}</div>
+                    <div style={{ fontSize:'11px', color:C.stone, marginTop:'2px' }}>📍 {partner.area}</div>
+                    <span style={{ fontSize:'10px', fontWeight:700, color:'#fff', background:C.teal, padding:'3px 8px', borderRadius:'10px', display:'inline-block', marginTop:'6px' }}>
+                      ₹{((partner.commission_paise || 2500) / 100).toFixed(0)} commission
+                    </span>
+                  </div>
+                  <button onClick={() => setSelectedPartner(partner)}
+                    style={{ padding:'9px 16px', background:C.saffron, color:'#fff', border:'none', borderRadius:'8px', fontSize:'12px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                    Select
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style={{ padding:'28px 24px' }}>
+            <div style={{ fontSize:'32px', textAlign:'center', marginBottom:'14px' }}>🏪</div>
+            <h3 style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'19px', color:C.navy, fontWeight:500, textAlign:'center', marginBottom:'8px', lineHeight:1.4 }}>
+              Drop order {order.order_number} at {selectedPartner.name}, {selectedPartner.area}?
+            </h3>
+            {error && <p style={{ color:C.danger, fontSize:'12px', textAlign:'center', marginBottom:'10px' }}>{error}</p>}
+            <div style={{ display:'flex', gap:'10px', marginTop:'18px' }}>
+              <button onClick={() => setSelectedPartner(null)} disabled={dropping}
+                style={{ flex:1, padding:'13px', background:'#fff', color:C.stone, border:`1.5px solid ${C.border}`, borderRadius:'10px', fontSize:'13px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif' }}>
+                Cancel
+              </button>
+              <button onClick={confirmDrop} disabled={dropping}
+                style={{ flex:1, padding:'13px', background:C.saffron, color:'#fff', border:'none', borderRadius:'10px', fontSize:'13px', fontWeight:700, cursor:dropping?'not-allowed':'pointer', fontFamily:'DM Sans, sans-serif', opacity:dropping?0.7:1 }}>
+                {dropping ? 'Dropping...' : 'Confirm Drop'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── RIDER DASHBOARD ─────────────────────────────────────────
 export default function RiderApp() {
   const { user, profile, signOut } = useAuth();
-  const [orders,    setOrders]    = useState([]);
-  const [tab,       setTab]       = useState('active');
-  const [loading,   setLoading]   = useState(true);
-  const [toast,     setToast]     = useState('');
-  const [itemEntry, setItemEntry] = useState(null);
+  const [orders,       setOrders]       = useState([]);
+  const [tab,          setTab]          = useState('active');
+  const [loading,      setLoading]      = useState(true);
+  const [toast,        setToast]        = useState('');
+  const [itemEntry,    setItemEntry]    = useState(null);
+  const [dropModalOrder, setDropModalOrder] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -309,11 +433,11 @@ export default function RiderApp() {
   async function fetchOrders() {
     setLoading(true);
     const statuses = tab === 'active'
-      ? ['pending_pickup', 'rider_assigned', 'picked_up', 'in_cleaning', 'out_for_delivery']
+      ? ['pending_pickup', 'rider_assigned', 'picked_up', 'at_channel_partner', 'in_cleaning', 'out_for_delivery']
       : ['delivered', 'cancelled'];
 
     let q = supabase.from('orders')
-      .select('*, customer_id, special_notes, address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), customer:profiles!orders_customer_id_fkey(full_name,phone)')
+      .select('*, customer_id, special_notes, address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), customer:profiles!orders_customer_id_fkey(full_name,phone), channel_partner:channel_partners(name,area)')
       .in('status', statuses)
       .order('created_at', { ascending: false });
 
@@ -378,6 +502,9 @@ export default function RiderApp() {
     { val: orders.filter(o => o.status === 'delivered').length, lbl: 'Done today' },
   ];
 
+  const completedHandovers = tab === 'active' ? orders.filter(o => o.status === 'at_channel_partner') : [];
+  const visibleOrders = tab === 'active' ? orders.filter(o => o.status !== 'at_channel_partner') : orders;
+
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif', background: '#111827', minHeight: '100vh' }}>
       {/* Header */}
@@ -422,7 +549,7 @@ export default function RiderApp() {
       {/* Orders */}
       <div style={{ padding: '10px 12px 20px' }}>
         {loading && <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.3)' }}>Loading...</div>}
-        {!loading && orders.length === 0 && (
+        {!loading && visibleOrders.length === 0 && completedHandovers.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.3)' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
               <Check size={48} strokeWidth={1.5} color='rgba(255,255,255,0.3)' />
@@ -431,7 +558,7 @@ export default function RiderApp() {
           </div>
         )}
 
-        {orders.map(order => {
+        {visibleOrders.map(order => {
           const sl = STATUS_LABEL[order.status] || { text: order.status, color: C.stone, bg: C.linen };
           const nextAction = NEXT[order.status];
           const totalRs = order.total_paise > 0 ? fmt.rupees(order.total_paise) : 'TBD';
@@ -501,12 +628,47 @@ export default function RiderApp() {
                       Enter items & confirm
                     </button>
                   )}
+                  {order.status === 'picked_up' && order.items_confirmed && (
+                    <button onClick={() => setDropModalOrder(order)}
+                      style={{ flex: 1, padding: '12px 10px', minHeight: '44px', background: C.teal, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                      <Store size={16} strokeWidth={2.5} />
+                      Drop at Channel Partner
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           );
         })}
+
+        {/* Completed Pickups — dropped at channel partner, rider is free */}
+        {tab === 'active' && completedHandovers.length > 0 && (
+          <>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '18px 2px 10px' }}>
+              Completed Pickups
+            </div>
+            {completedHandovers.map(order => (
+              <div key={order.id} style={{ background: '#1F2937', borderRadius: '16px', border: `1px solid ${C.teal}40`, marginBottom: '10px', padding: '12px 14px', opacity: 0.85 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, background: 'rgba(255,255,255,0.12)', color: '#fff', padding: '4px 8px', borderRadius: '5px' }}>{order.order_number}</span>
+                  <span style={{ fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '12px', background: C.tealLight, color: C.teal }}>At collection point</span>
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
+                  Dropped at {order.channel_partner?.name || 'partner'} ✓
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
+
+      {dropModalOrder && (
+        <PartnerDropModal
+          order={dropModalOrder}
+          onClose={() => setDropModalOrder(null)}
+          onDropped={() => { setDropModalOrder(null); fetchOrders(); showToast('Dropped at partner ✓'); }}
+        />
+      )}
 
       {toast && (
         <div style={{ position: 'fixed', bottom: '20px', left: '50%', transform: 'translateX(-50%)', background: C.navy, color: '#fff', padding: '10px 18px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, zIndex: 200, whiteSpace: 'nowrap' }}>

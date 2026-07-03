@@ -34,7 +34,7 @@ export default function OpsApp() {
   async function fetchAll() {
     setLoading(true);
     const [{ data: ord }, { data: rid }, { data: par }, { data: bat }] = await Promise.all([
-      supabase.from('orders').select('*, customer:profiles!orders_customer_id_fkey(full_name,phone), rider:profiles!orders_rider_id_fkey(full_name,phone), address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), tags:garment_tags(id,tag_code,item_name,status)').order('created_at', { ascending:false }),
+      supabase.from('orders').select('*, customer:profiles!orders_customer_id_fkey(full_name,phone), rider:profiles!orders_rider_id_fkey(full_name,phone), address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), tags:garment_tags(id,tag_code,item_name,status), channel_partner:channel_partners(name,area)').order('created_at', { ascending:false }),
       supabase.from('profiles').select('*').eq('role','rider').eq('is_active',true),
       supabase.from('channel_partners').select('*, profile:profiles(full_name)').order('created_at', { ascending:false }),
       supabase.from('profiles').select('*').eq('role','batch_rider').eq('is_active',true),
@@ -490,10 +490,15 @@ function OrderCard({ order, riders, onUpdateStatus, onAssign, onUnassign, onTag,
           <MapPin size={12} strokeWidth={2.5} />
           {addr||'—'}
         </div>
-        <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 9px', borderRadius:'20px', background:sc.bg, color:sc.color, minWidth:'120px', textAlign:'center' }}>
-          <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:sc.color, display:'inline-block', marginRight:'4px', verticalAlign:'middle' }}/>
-          {sc.label}
-        </span>
+        <div style={{ minWidth:'120px' }}>
+          <span style={{ fontSize:'10px', fontWeight:700, padding:'3px 9px', borderRadius:'20px', background:sc.bg, color:sc.color, textAlign:'center', display:'inline-block' }}>
+            <span style={{ width:'5px', height:'5px', borderRadius:'50%', background:sc.color, display:'inline-block', marginRight:'4px', verticalAlign:'middle' }}/>
+            {sc.label}
+          </span>
+          {order.channel_partner && (
+            <div style={{ fontSize:'9px', color:C.teal, fontWeight:600, marginTop:'3px' }}>🏪 {order.channel_partner.name}</div>
+          )}
+        </div>
         <div style={{ minWidth:'120px', fontSize:'11px', display:'flex', alignItems:'center', gap:'6px' }}>
           {order.rider ? (
             <span style={{ color:C.success, fontWeight:600, display:'flex', alignItems:'center', gap:'6px' }}>
@@ -527,7 +532,7 @@ function OrderCard({ order, riders, onUpdateStatus, onAssign, onUnassign, onTag,
             </div>
             <div>
               <div style={{ fontSize:'9px', fontWeight:700, color:C.stone, textTransform:'uppercase', letterSpacing:'0.5px', marginBottom:'6px' }}>Details</div>
-              {[['Payment', order.payment_method?.toUpperCase()||'COD'],['Type', order.pickup_type==='urgent'?'Urgent':'Standard'],['Est. delivery', order.estimated_delivery?fmt.date(order.estimated_delivery):'TBD']].map(([k,v]) => (
+              {[['Payment', order.payment_method?.toUpperCase()||'COD'],['Type', order.pickup_type==='urgent'?'Urgent':'Standard'],['Est. delivery', order.estimated_delivery?fmt.date(order.estimated_delivery):'TBD'],['Partner', order.channel_partner ? `${order.channel_partner.name} (${order.channel_partner.area})` : '—']].map(([k,v]) => (
                 <div key={k} style={{ display:'flex', justifyContent:'space-between', fontSize:'11px', color:C.stone, marginBottom:'3px' }}>
                   <span>{k}</span><span style={{ color:C.navy, fontWeight:500, display:'flex', alignItems:'center', gap:'4px' }}>
                     {k === 'Type' && order.pickup_type === 'urgent' && <Zap size={12} strokeWidth={2.5} color={C.saffron} />}

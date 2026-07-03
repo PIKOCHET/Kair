@@ -11,6 +11,7 @@ function StatusBadge({ status }) {
   return (
     <span style={{ fontSize:'12px', fontWeight:700, padding:'6px 12px', borderRadius:'20px', background:s.bg, color:s.color, display:'inline-flex', alignItems:'center', gap:'5px', letterSpacing:'0.3px' }}>
       <span style={{ width:'7px', height:'7px', borderRadius:'50%', background:s.color }} />
+      {s.icon && <span>{s.icon}</span>}
       {s.label}
     </span>
   );
@@ -18,7 +19,7 @@ function StatusBadge({ status }) {
 
 function ProgressBar({ status }) {
   const STEPS = ['Pickup','Cleaning','Ready','Delivered'];
-  const IDX = { pending_pickup:0, rider_assigned:0, picked_up:1, in_cleaning:1, quality_check:2, ready:2, out_for_delivery:3, delivered:3 };
+  const IDX = { pending_pickup:0, rider_assigned:0, picked_up:1, at_channel_partner:1, in_transit_to_workshop:1, in_cleaning:1, quality_check:2, ready:2, out_for_delivery:3, delivered:3 };
   const si = IDX[status] ?? 0;
   const pct = Math.min((si/3)*100, 100);
   return (
