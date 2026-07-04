@@ -105,7 +105,7 @@ export default function SettlementDashboard() {
           { val: settlements.length, lbl: 'Active Partners', color: C.success },
         ].map((stat, i) => (
           <div key={i} style={{ background: '#fff', borderRadius: '12px', padding: '14px', border: `1px solid ${C.border}` }}>
-            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', fontWeight: 700, color: stat.color }}>
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '22px', fontWeight: 700, color: stat.color }}>
               {stat.val}
             </div>
             <div style={{ fontSize: '10px', color: C.stone, marginTop: '4px' }}>{stat.lbl}</div>

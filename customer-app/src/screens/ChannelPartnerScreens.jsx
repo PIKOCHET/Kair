@@ -12,9 +12,12 @@ function ChannelPartnerHome() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ received: 0, commission: 0 });
   const [garmentCount, setGarmentCount] = useState({ shirts: 0, trousers: 0, sarees: 0, dryClean: 0, shoes: 0 });
+  const [handingOver, setHandingOver] = useState(false);
+  const [toast, setToast] = useState('');
 
-  useEffect(() => {
-    const fetchData = async () => {
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
+
+  const fetchData = async () => {
       if (!user?.id) return;
       try {
         setLoading(true);
@@ -70,9 +73,36 @@ function ChannelPartnerHome() {
       } finally {
         setLoading(false);
       }
-    };
-    fetchData();
-  }, [user?.id]);
+  };
+
+  useEffect(() => { fetchData(); }, [user?.id]);
+
+  // Hand all pending bags to the batch rider: at_channel_partner → in_transit_to_workshop
+  async function confirmBatchHandover() {
+    if (!partner?.id || orders.length === 0 || handingOver) return;
+    setHandingOver(true);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: 'in_transit_to_workshop', collected_by_batch_at: new Date().toISOString() })
+        .eq('channel_partner_id', partner.id)
+        .eq('status', 'at_channel_partner');
+      if (error) { showToast('Error: ' + error.message); return; }
+
+      await supabase.from('notifications').insert(orders.map(o => ({
+        user_id: o.customer_id, order_id: o.id, type: 'in_transit_to_workshop',
+        title: 'Heading to workshop 🚐',
+        message: `${o.order_number}: Your clothes are on their way to our workshop for overnight care.`,
+        is_read: false,
+      })));
+
+      showToast(`${orders.length} order${orders.length > 1 ? 's' : ''} handed over ✓`);
+      setGarmentCount({ shirts: 0, trousers: 0, sarees: 0, dryClean: 0, shoes: 0 });
+      fetchData();
+    } finally {
+      setHandingOver(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -168,8 +198,9 @@ function ChannelPartnerHome() {
             </div>
           </div>
         ))}
-        <button style={{ width:'100%', background:C.saffron, color:'#fff', border:'none', borderRadius:'26px', padding:'12px 20px', marginTop:'16px', fontSize:'12px', fontWeight:700, letterSpacing:'3px', textTransform:'uppercase', cursor:'pointer', fontFamily:'DM Sans, sans-serif', height:'52px' }}>
-          Confirm Batch Handover →
+        <button onClick={confirmBatchHandover} disabled={orders.length === 0 || handingOver}
+          style={{ width:'100%', background:orders.length === 0 ? '#D8D2C7' : C.saffron, color:'#fff', border:'none', borderRadius:'26px', padding:'12px 20px', marginTop:'16px', fontSize:'12px', fontWeight:700, letterSpacing:'3px', textTransform:'uppercase', cursor:orders.length === 0 ? 'not-allowed' : 'pointer', fontFamily:'DM Sans, sans-serif', height:'52px', opacity:handingOver ? 0.7 : 1 }}>
+          {handingOver ? 'Handing over...' : orders.length === 0 ? 'No bags to hand over' : `Confirm Batch Handover (${orders.length}) →`}
         </button>
       </div>
 
@@ -187,6 +218,12 @@ function ChannelPartnerHome() {
           </button>
         ))}
       </div>
+
+      {toast && (
+        <div style={{ position:'fixed', bottom:'84px', left:'50%', transform:'translateX(-50%)', background:C.navy, color:'#fff', padding:'10px 18px', borderRadius:'10px', fontSize:'13px', fontWeight:500, zIndex:200, whiteSpace:'nowrap' }}>
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

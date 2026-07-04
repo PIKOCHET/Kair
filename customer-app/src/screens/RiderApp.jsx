@@ -465,8 +465,17 @@ export default function RiderApp() {
     if (status === 'delivered') update.delivered_at = new Date().toISOString();
 
     const { error } = await supabase.from('orders').update(update).eq('id', orderId);
-    if (error) showToast('Error: ' + error.message);
-    else { showToast('Status updated ✓'); fetchOrders(); }
+    if (error) { showToast('Error: ' + error.message); return; }
+
+    // Notify customer on delivery milestones
+    const order = orders.find(o => o.id === orderId);
+    if (order && status === 'delivered') {
+      await supabase.from('notifications').insert({
+        user_id: order.customer_id, order_id: orderId, type: 'delivered',
+        title: 'Delivered! ✨', message: `Order ${order.order_number} delivered. Your clothes are home — we hope you love them!`, is_read: false,
+      });
+    }
+    showToast('Status updated ✓'); fetchOrders();
   }
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
@@ -529,7 +538,7 @@ export default function RiderApp() {
         <div style={{ display: 'flex', background: 'rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
           {stats.map((s, i) => (
             <div key={s.lbl} style={{ flex: 1, padding: '10px 6px', textAlign: 'center', borderRight: i < 2 ? '1px solid rgba(255,255,255,0.08)' : 'none' }}>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', fontWeight: 700, color: C.saffron }}>{s.val}</div>
+              <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '26px', fontWeight: 700, color: C.saffron }}>{s.val}</div>
               <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{s.lbl}</div>
             </div>
           ))}
@@ -576,7 +585,7 @@ export default function RiderApp() {
                     URGENT
                   </span>}
                 </div>
-                <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', fontWeight: 700, color: C.saffron }}>{totalRs}</span>
+                <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '16px', fontWeight: 700, color: C.saffron }}>{totalRs}</span>
               </div>
 
               {/* Card body */}

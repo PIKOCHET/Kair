@@ -138,7 +138,7 @@ function BatchRiderHome() {
       {/* Hero Route Card */}
       <div style={{ margin:'20px', background:C.navy, borderRadius:'20px', padding:'20px' }}>
         <div style={{ fontSize:'9px', fontWeight:600, color:C.gold, textTransform:'uppercase', letterSpacing:'2px', marginBottom:'12px' }}>Ongoing Shift</div>
-        <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'32px', color:'#fff', fontWeight:400, marginBottom:'16px' }}>Route PUNE-E04</div>
+        <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'32px', color:'#fff', fontWeight:400, marginBottom:'16px' }}>Route <span style={{ fontFamily:'DM Sans, sans-serif', fontWeight:700, fontSize:'26px', letterSpacing:'1px' }}>PUNE-E04</span></div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
           <div style={{ background:'rgba(0,0,0,0.3)', borderRadius:'12px', padding:'12px', color:'#fff' }}>
             <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.7)', marginBottom:'4px' }}>Next Stop</div>
@@ -204,7 +204,7 @@ function BatchRiderHome() {
                       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px', marginBottom:'12px' }}>
                         <div style={{ background:C.linen, borderRadius:'10px', padding:'12px', textAlign:'center' }}>
                           <div style={{ fontSize:'9px', color:C.stone, marginBottom:'4px' }}>Bags to Collect</div>
-                          <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'28px', color:C.saffron, fontWeight:400 }}>{partner.orderCount}</div>
+                          <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'28px', color:C.saffron, fontWeight:700 }}>{partner.orderCount}</div>
                         </div>
                         <div style={{ background:C.linen, borderRadius:'10px', padding:'12px', textAlign:'center' }}>
                           <div style={{ fontSize:'9px', color:C.stone, marginBottom:'4px' }}>Contact</div>

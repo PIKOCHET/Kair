@@ -46,16 +46,44 @@ export default function OpsApp() {
     setLoading(false);
   }
 
+  // Customer-facing notification for each workshop/delivery stage (Kair Standard: customer always knows where their clothes are)
+  const STATUS_NOTIF = {
+    in_cleaning:            { title:'In expert hands ✨',        message:'Your clothes are being professionally cleaned at our workshop.' },
+    quality_check:          { title:'Quality inspection 🔍',      message:'Final quality checks in progress — almost ready!' },
+    ready:                  { title:'Fresh and ready! 🎉',        message:'Your clothes are cleaned, pressed and packed. Delivery is on its way today.' },
+    out_for_delivery:       { title:'Rider on the way! 🏍️',      message:'Your freshly cleaned clothes are out for delivery.' },
+    delivered:              { title:'Delivered! ✨',              message:'Your clothes are home. We hope you love them!' },
+    in_transit_to_workshop: { title:'Heading to workshop 🚐',     message:'Your clothes are on their way to our workshop for overnight care.' },
+  };
+
   async function updateStatus(orderId, status) {
     const update = { status };
     if (status==='picked_up')       update.picked_up_at = new Date().toISOString();
     if (status==='delivered')       update.delivered_at = new Date().toISOString();
-    await supabase.from('orders').update(update).eq('id', orderId);
+    const { error } = await supabase.from('orders').update(update).eq('id', orderId);
+    if (error) { showToast('Error: ' + error.message); return; }
+
+    const order = orders.find(o => o.id === orderId);
+    const notif = STATUS_NOTIF[status];
+    if (order && notif) {
+      await supabase.from('notifications').insert({
+        user_id: order.customer_id, order_id: orderId, type: status,
+        title: notif.title, message: `${order.order_number}: ${notif.message}`, is_read: false,
+      });
+    }
     showToast('Status updated ✓'); fetchAll();
   }
 
   async function assignRider(orderId, riderId, riderName) {
-    await supabase.from('orders').update({ rider_id:riderId, status:'rider_assigned' }).eq('id', orderId);
+    const { error } = await supabase.from('orders').update({ rider_id:riderId, status:'rider_assigned' }).eq('id', orderId);
+    if (error) { showToast('Error: ' + error.message); return; }
+    const order = orders.find(o => o.id === orderId);
+    if (order) {
+      await supabase.from('notifications').insert({
+        user_id: order.customer_id, order_id: orderId, type: 'rider_assigned',
+        title: 'Rider assigned 🏍️', message: `${riderName} is on the way to pick up ${order.order_number}.`, is_read: false,
+      });
+    }
     setAssignModal(null); showToast(`${riderName} assigned ✓`); fetchAll();
   }
 
@@ -375,7 +403,7 @@ export default function OpsApp() {
                 { val:orders.filter(o => o.status === 'in_transit_to_workshop').length, lbl:'In Transit', color:C.navy },
               ].map((s, i) => (
                 <div key={i} style={{ background:'#fff', borderRadius:'12px', padding:'14px', border:`1px solid ${C.border}` }}>
-                  <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', fontWeight:700, color:s.color, marginBottom:'4px' }}>{s.val}</div>
+                  <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'28px', fontWeight:700, color:s.color, marginBottom:'4px' }}>{s.val}</div>
                   <div style={{ fontSize:'11px', color:C.stone }}>{s.lbl}</div>
                 </div>
               ))}

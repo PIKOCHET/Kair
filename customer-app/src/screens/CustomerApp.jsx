@@ -44,6 +44,7 @@ function ProgressBar({ status }) {
 // ── HOME ──────────────────────────────────────────────────
 function HomeView({ profile, onPickup, onViewOrders }) {
   const [activeOrders, setActiveOrders] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -54,6 +55,12 @@ function HomeView({ profile, onPickup, onViewOrders }) {
       .not('status', 'in', '("delivered","cancelled")')
       .order('created_at', { ascending: false })
       .then(({ data }) => setActiveOrders(data || []));
+
+    supabase.from('notifications')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('is_read', false)
+      .then(({ count }) => setUnreadCount(count || 0));
 
     // Realtime
     const ch = supabase.channel('home_orders')
@@ -77,7 +84,7 @@ function HomeView({ profile, onPickup, onViewOrders }) {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
           <button style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'20px', display:'flex', alignItems:'center', justifyContent:'center' }}>☰</button>
           <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', color:'#fff', fontWeight:400, letterSpacing:'4px', textAlign:'center', flex:1 }}>KAIR</div>
-          <button style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'18px', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>🔔<span style={{ position:'absolute', top:'-4px', right:'-4px', width:'18px', height:'18px', borderRadius:'50%', background:C.saffron, color:'#fff', fontSize:'10px', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center' }}>{activeOrders.length}</span></button>
+          <button style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'18px', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>🔔{unreadCount > 0 && <span style={{ position:'absolute', top:'-4px', right:'-4px', width:'18px', height:'18px', borderRadius:'50%', background:C.saffron, color:'#fff', fontSize:'10px', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'DM Sans, sans-serif' }}>{unreadCount}</span>}</button>
         </div>
         <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.6)', fontWeight:500, display:'flex', alignItems:'center', gap:'4px' }}>📍 CURRENT LOCATION</div>
       </div>
@@ -102,7 +109,7 @@ function HomeView({ profile, onPickup, onViewOrders }) {
         <div style={{ background:C.linen, borderRadius:'16px', padding:'16px', display:'flex', flexDirection:'column', justifyContent:'space-between', minHeight:'140px' }}>
           <div>
             <div style={{ fontSize:'10px', fontWeight:600, color:C.stone, textTransform:'uppercase', letterSpacing:'1px', marginBottom:'8px' }}>Active Orders</div>
-            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'32px', color:C.navy, fontWeight:400 }}>02</div>
+            <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'32px', color:C.navy, fontWeight:700 }}>{String(activeOrders.length).padStart(2, '0')}</div>
           </div>
           <div style={{ fontSize:'24px', opacity:0.3, textAlign:'right' }}>📦</div>
         </div>
@@ -131,9 +138,9 @@ function HomeView({ profile, onPickup, onViewOrders }) {
             <div style={{ fontSize:'16px', fontWeight:700, color:C.navy, fontFamily:'DM Sans, sans-serif' }}>Standard</div>
             <div style={{ fontSize:'12px', color:C.stone, fontStyle:'italic', fontFamily:'DM Sans, sans-serif' }}>2-3 Business Days</div>
           </div>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:400 }}>₹348</div>
-            <button style={{ background:C.saffron, color:'#fff', border:'none', padding:'6px 14px', borderRadius:'20px', fontSize:'11px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif', marginTop:'4px' }}>BOOK</button>
+          <div style={{ textAlign:'right', flexShrink:0 }}>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:400, whiteSpace:'nowrap' }}>₹348</div>
+            <span style={{ display:'inline-block', background:C.saffron, color:'#fff', padding:'6px 14px', borderRadius:'20px', fontSize:'11px', fontWeight:700, fontFamily:'DM Sans, sans-serif', marginTop:'4px' }}>BOOK</span>
           </div>
         </button>
 
@@ -145,9 +152,9 @@ function HomeView({ profile, onPickup, onViewOrders }) {
             <div style={{ fontSize:'16px', fontWeight:700, color:C.navy, fontFamily:'DM Sans, sans-serif' }}>Urgent</div>
             <div style={{ fontSize:'12px', color:C.stone, fontStyle:'italic', fontFamily:'DM Sans, sans-serif' }}>Same Day Delivery</div>
           </div>
-          <div style={{ textAlign:'right' }}>
-            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:400 }}>₹749</div>
-            <button style={{ background:C.saffron, color:'#fff', border:'none', padding:'6px 14px', borderRadius:'20px', fontSize:'11px', fontWeight:700, cursor:'pointer', fontFamily:'DM Sans, sans-serif', marginTop:'4px' }}>BOOK</button>
+          <div style={{ textAlign:'right', flexShrink:0 }}>
+            <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', color:C.navy, fontWeight:400, whiteSpace:'nowrap' }}>₹749</div>
+            <span style={{ display:'inline-block', background:C.saffron, color:'#fff', padding:'6px 14px', borderRadius:'20px', fontSize:'11px', fontWeight:700, fontFamily:'DM Sans, sans-serif', marginTop:'4px' }}>BOOK</span>
           </div>
         </button>
       </div>
@@ -181,7 +188,7 @@ function HomeView({ profile, onPickup, onViewOrders }) {
                   </div>
                   <div style={{ textAlign:'right' }}>
                     <StatusBadge status={order.status} />
-                    {order.total_paise > 0 && <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'18px', fontWeight:700, color:C.saffron, marginTop:'6px' }}>{fmt.rupees(order.total_paise)}</div>}
+                    {order.total_paise > 0 && <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'18px', fontWeight:700, color:C.saffron, marginTop:'6px' }}>{fmt.rupees(order.total_paise)}</div>}
                     {order.estimated_delivery && <div style={{ fontSize:'10px', color:C.stone, marginTop:'3px', fontWeight:500 }}>Est. {fmt.date(order.estimated_delivery)}</div>}
                   </div>
                 </div>
@@ -223,8 +230,8 @@ function HomeView({ profile, onPickup, onViewOrders }) {
                 <div key={svc.id} style={{ display:'flex', alignItems:'center', gap:'10px', padding:'10px 0', borderBottom:i<items.length-1?`1px solid ${C.linen}`:'none' }}>
                   <span style={{ fontSize:'18px', width:'24px', textAlign:'center', flexShrink:0 }}>{svc.emoji}</span>
                   <span style={{ flex:1, fontSize:'13px', fontWeight:500, color:C.navy }}>{svc.name}</span>
-                  <span style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'16px', fontWeight:700, color:C.navy }}>
-                    {fmt.rupees(svc.price_paise)}<span style={{ fontSize:'11px', fontWeight:400, color:C.stone, fontFamily:'DM Sans, sans-serif' }}> {svc.unit}</span>
+                  <span style={{ fontFamily:'DM Sans, sans-serif', fontSize:'14px', fontWeight:700, color:C.navy }}>
+                    {fmt.rupees(svc.price_paise)}<span style={{ fontSize:'11px', fontWeight:400, color:C.stone }}> {svc.unit}</span>
                   </span>
                   <span style={{ fontSize:'10px', color:C.stone, background:'#F0EBE3', padding:'4px 10px', borderRadius:'20px', whiteSpace:'nowrap', fontWeight:500 }}>{svc.tat_days}d</span>
                 </div>
@@ -459,7 +466,7 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
             </div>
           )}
           {discountPaise > 0 && discountPaise !== 1 && (
-            <div style={{ marginTop:'10px', fontFamily:'Cormorant Garamond, serif', fontSize:'16px', color:C.success, fontWeight:700, textAlign:'center', padding:'10px', background:C.successBg, borderRadius:'10px' }}>
+            <div style={{ marginTop:'10px', fontFamily:'DM Sans, sans-serif', fontSize:'15px', color:C.success, fontWeight:700, textAlign:'center', padding:'10px', background:C.successBg, borderRadius:'10px' }}>
               💰 Discount: {fmt.rupees(discountPaise)}
             </div>
           )}
@@ -509,7 +516,7 @@ function ConfirmedView({ order, onTrack }) {
       </p>
       <div style={{ background:C.navy, borderRadius:'20px', padding:'22px 36px', width:'100%', textAlign:'center', marginBottom:'16px' }}>
         <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:'1.5px', marginBottom:'6px' }}>Rider arriving within</div>
-        <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'56px', color:'#fff', fontWeight:300, lineHeight:1 }}>{mm}:{ss}</div>
+        <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'52px', color:'#fff', fontWeight:700, lineHeight:1, letterSpacing:'2px' }}>{mm}:{ss}</div>
         <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.4)', marginTop:'5px' }}>minutes · seconds</div>
       </div>
       {order.pickup_type === 'urgent' && (
@@ -619,7 +626,7 @@ function OrdersView({ onBack }) {
               </div>
               <div style={{ textAlign:'right' }}>
                 <StatusBadge status={order.status} />
-                <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'20px', fontWeight:700, color:C.saffron, marginTop:'6px' }}>
+                <div style={{ fontFamily:'DM Sans, sans-serif', fontSize:'18px', fontWeight:700, color:C.saffron, marginTop:'6px' }}>
                   {order.total_paise > 0 ? fmt.rupees(order.total_paise) : 'TBD'}
                 </div>
                 {order.estimated_delivery && <div style={{ fontSize:'11px', color:C.stone, marginTop:'3px', fontWeight:500 }}>Est. {fmt.date(order.estimated_delivery)}</div>}
