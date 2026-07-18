@@ -419,6 +419,8 @@ export default function RiderApp() {
   const [toast,        setToast]        = useState('');
   const [itemEntry,    setItemEntry]    = useState(null);
   const [dropModalOrder, setDropModalOrder] = useState(null);
+  const [doneToday,    setDoneToday]    = useState(0);
+  const [busy,         setBusy]         = useState(false);
 
   useEffect(() => {
     fetchOrders();
@@ -432,20 +434,30 @@ export default function RiderApp() {
 
   async function fetchOrders() {
     setLoading(true);
+    // Active = work to do; Completed = full history of everything this rider touched
     const statuses = tab === 'active'
-      ? ['pending_pickup', 'rider_assigned', 'picked_up', 'at_channel_partner', 'in_cleaning', 'out_for_delivery']
-      : ['delivered', 'cancelled'];
+      ? ['pending_pickup', 'rider_assigned', 'picked_up', 'at_channel_partner', 'out_for_delivery']
+      : ['at_channel_partner', 'in_transit_to_workshop', 'in_cleaning', 'quality_check', 'ready', 'out_for_delivery', 'delivered', 'cancelled'];
 
     let q = supabase.from('orders')
       .select('*, customer_id, special_notes, address:addresses(flat_no,area,city,landmark), items:order_items(service_name,quantity,price_paise), customer:profiles!orders_customer_id_fkey(full_name,phone), channel_partner:channel_partners(name,area)')
       .in('status', statuses)
       .order('created_at', { ascending: false });
 
-    if (tab === 'active') q = q.or(`rider_id.eq.${user.id},rider_id.is.null`);
-    else q = q.eq('rider_id', user.id);
+    if (tab === 'active') q = q.or(`rider_id.eq.${user.id},delivery_rider_id.eq.${user.id},rider_id.is.null`);
+    else q = q.or(`rider_id.eq.${user.id},delivery_rider_id.eq.${user.id}`);
 
-    const { data } = await q;
+    const { data, error } = await q;
+    if (error) console.error('Rider orders fetch:', error);
     setOrders(data || []);
+
+    // Done today — independent of which tab is open
+    const { count } = await supabase.from('orders')
+      .select('id', { count: 'exact', head: true })
+      .or(`rider_id.eq.${user.id},delivery_rider_id.eq.${user.id}`)
+      .eq('status', 'delivered')
+      .gte('delivered_at', new Date().toISOString().split('T')[0]);
+    setDoneToday(count || 0);
     setLoading(false);
   }
 
@@ -459,23 +471,29 @@ export default function RiderApp() {
   }
 
   async function updateStatus(orderId, status, assignSelf) {
-    const update = { status };
-    if (assignSelf) update.rider_id = profile.id;
-    if (status === 'picked_up') update.picked_up_at = new Date().toISOString();
-    if (status === 'delivered') update.delivered_at = new Date().toISOString();
+    if (busy) return; // double-tap protection
+    setBusy(true);
+    try {
+      const update = { status };
+      if (assignSelf) update.rider_id = profile.id;
+      if (status === 'picked_up') update.picked_up_at = new Date().toISOString();
+      if (status === 'delivered') update.delivered_at = new Date().toISOString();
 
-    const { error } = await supabase.from('orders').update(update).eq('id', orderId);
-    if (error) { showToast('Error: ' + error.message); return; }
+      const { error } = await supabase.from('orders').update(update).eq('id', orderId);
+      if (error) { console.error('Status update:', error); showToast('Could not update — please try again'); return; }
 
-    // Notify customer on delivery milestones
-    const order = orders.find(o => o.id === orderId);
-    if (order && status === 'delivered') {
-      await supabase.from('notifications').insert({
-        user_id: order.customer_id, order_id: orderId, type: 'delivered',
-        title: 'Delivered! ✨', message: `Order ${order.order_number} delivered. Your clothes are home — we hope you love them!`, is_read: false,
-      });
+      // Notify customer on delivery milestones
+      const order = orders.find(o => o.id === orderId);
+      if (order && status === 'delivered') {
+        await supabase.from('notifications').insert({
+          user_id: order.customer_id, order_id: orderId, type: 'delivered',
+          title: 'Delivered! ✨', message: `Order ${order.order_number} delivered. Your clothes are home — we hope you love them!`, is_read: false,
+        });
+      }
+      showToast('Status updated ✓'); fetchOrders();
+    } finally {
+      setBusy(false);
     }
-    showToast('Status updated ✓'); fetchOrders();
   }
 
   function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
@@ -497,22 +515,30 @@ export default function RiderApp() {
   };
 
   const STATUS_LABEL = {
-    pending_pickup:   { text: 'New pickup',  color: C.saffron,  bg: '#FFF0E8' },
-    rider_assigned:   { text: 'Go pickup',   color: C.saffron,  bg: '#FFF0E8' },
-    picked_up:        { text: 'Picked up',   color: '#1A5FBF',  bg: '#E5EEFF' },
-    in_cleaning:      { text: 'At facility', color: '#1A5FBF',  bg: '#E5EEFF' },
-    out_for_delivery: { text: 'Delivering',  color: C.saffron,  bg: '#FFF0E8' },
-    delivered:        { text: 'Done ✓',     color: '#0A6B3E',  bg: '#E8F5EE' },
+    pending_pickup:         { text: 'New pickup',       color: C.saffron,  bg: '#FFF0E8' },
+    rider_assigned:         { text: 'Go pickup',        color: C.saffron,  bg: '#FFF0E8' },
+    picked_up:              { text: 'Picked up',        color: '#1A5FBF',  bg: '#E5EEFF' },
+    at_channel_partner:     { text: 'At partner',       color: C.teal,     bg: C.tealLight },
+    in_transit_to_workshop: { text: 'To workshop',      color: '#D97706',  bg: '#FEF3E2' },
+    in_cleaning:            { text: 'At facility',      color: '#1A5FBF',  bg: '#E5EEFF' },
+    quality_check:          { text: 'Quality check',    color: '#0A6B3E',  bg: '#E8F5EE' },
+    ready:                  { text: 'Ready',            color: '#0A6B3E',  bg: '#E8F5EE' },
+    out_for_delivery:       { text: 'Delivering',       color: C.saffron,  bg: '#FFF0E8' },
+    delivered:              { text: 'Done ✓',           color: '#0A6B3E',  bg: '#E8F5EE' },
+    cancelled:              { text: 'Cancelled',        color: '#D32F2F',  bg: '#FDEAEA' },
   };
 
   const stats = [
     { val: orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length, lbl: 'Active' },
     { val: orders.filter(o => ['pending_pickup', 'rider_assigned'].includes(o.status)).length, lbl: 'Pending' },
-    { val: orders.filter(o => o.status === 'delivered').length, lbl: 'Done today' },
+    { val: doneToday, lbl: 'Done today' },
   ];
 
   const completedHandovers = tab === 'active' ? orders.filter(o => o.status === 'at_channel_partner') : [];
-  const visibleOrders = tab === 'active' ? orders.filter(o => o.status !== 'at_channel_partner') : orders;
+  const deliveryOrders = tab === 'active' ? orders.filter(o => o.status === 'out_for_delivery' && (o.delivery_rider_id === user.id || o.rider_id === user.id)) : [];
+  const visibleOrders = tab === 'active'
+    ? orders.filter(o => o.status !== 'at_channel_partner' && o.status !== 'out_for_delivery')
+    : orders;
 
   return (
     <div style={{ fontFamily: 'DM Sans, sans-serif', background: '#111827', minHeight: '100vh' }}>
@@ -558,13 +584,57 @@ export default function RiderApp() {
       {/* Orders */}
       <div style={{ padding: '10px 12px 20px' }}>
         {loading && <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.3)' }}>Loading...</div>}
-        {!loading && visibleOrders.length === 0 && completedHandovers.length === 0 && (
+        {!loading && visibleOrders.length === 0 && completedHandovers.length === 0 && deliveryOrders.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px', color: 'rgba(255,255,255,0.3)' }}>
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
               <Check size={48} strokeWidth={1.5} color='rgba(255,255,255,0.3)' />
             </div>
             <p style={{ fontSize: '14px', fontWeight: 500 }}>No {tab === 'active' ? 'active' : 'completed'} orders</p>
           </div>
+        )}
+
+        {/* Deliveries — separate section, distinct badge, collect amount */}
+        {tab === 'active' && deliveryOrders.length > 0 && (
+          <>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: '#93C5FD', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '6px 2px 10px' }}>
+              🚀 Deliveries
+            </div>
+            {deliveryOrders.map(order => {
+              const addr = [order.address?.flat_no, order.address?.area, order.address?.city].filter(Boolean).join(', ');
+              return (
+                <div key={order.id} style={{ background: '#1F2937', borderRadius: '16px', border: '1px solid rgba(59,130,246,0.4)', marginBottom: '12px', overflow: 'hidden' }}>
+                  <div style={{ background: 'rgba(59,130,246,0.12)', padding: '12px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontFamily: 'monospace', fontSize: '11px', fontWeight: 700, background: 'rgba(255,255,255,0.12)', color: '#fff', padding: '4px 8px', borderRadius: '5px' }}>{order.order_number}</span>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '12px', background: '#1A5FBF', color: '#fff' }}>DELIVERY</span>
+                    </div>
+                    <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '16px', fontWeight: 700, color: '#93C5FD' }}>{order.total_paise > 0 ? fmt.rupees(order.total_paise) : 'TBD'}</span>
+                  </div>
+                  <div style={{ padding: '12px 14px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff', marginBottom: '4px' }}>{order.customer?.full_name || 'Customer'} · <a href={`tel:${order.customer?.phone}`} style={{ color: C.saffron, textDecoration: 'none' }}>{order.customer?.phone || '—'}</a></div>
+                    <a href={`https://maps.google.com/?q=${encodeURIComponent(addr || 'Pune')}`} target="_blank" rel="noreferrer"
+                      style={{ display: 'block', fontSize: '11px', color: 'rgba(255,255,255,0.55)', background: 'rgba(255,255,255,0.04)', borderRadius: '8px', padding: '9px 11px', marginBottom: '10px', textDecoration: 'none' }}>
+                      📍 {addr || 'Pune'} <span style={{ opacity: 0.4, fontSize: '9px' }}>↗ Maps</span>
+                    </a>
+                    {order.total_paise > 0 && order.payment_method === 'cod' && (
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#FCD34D', background: 'rgba(252,211,77,0.1)', borderRadius: '8px', padding: '9px 11px', marginBottom: '10px' }}>
+                        💵 Collect {fmt.rupees(order.total_paise)} from customer
+                      </div>
+                    )}
+                    <button onClick={() => updateStatus(order.id, 'delivered')} disabled={busy}
+                      style={{ width: '100%', padding: '12px 10px', minHeight: '44px', background: busy ? C.stone : '#0A6B3E', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: busy ? 'wait' : 'pointer', fontFamily: 'DM Sans, sans-serif' }}>
+                      ✅ Mark as Delivered
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+            {visibleOrders.length > 0 && (
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.8px', margin: '18px 2px 10px' }}>
+                Pickups
+              </div>
+            )}
+          </>
         )}
 
         {visibleOrders.map(order => {
@@ -622,11 +692,18 @@ export default function RiderApp() {
                   </div>
                 )}
 
+                {/* Dropped-at-partner history line */}
+                {order.channel_partner && ['at_channel_partner','in_transit_to_workshop','in_cleaning','quality_check','ready','out_for_delivery','delivered'].includes(order.status) && (
+                  <div style={{ fontSize: '11px', color: C.teal, background: 'rgba(13,115,119,0.12)', borderRadius: '8px', padding: '8px 10px', marginBottom: '10px', fontWeight: 600 }}>
+                    🏪 Dropped at {order.channel_partner.name} ({order.channel_partner.area}){order.at_partner_at ? ` · ${new Date(order.at_partner_at).toLocaleString('en-IN', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}` : ''}
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
-                  {nextAction && (
-                    <button onClick={() => updateStatus(order.id, nextAction.next, nextAction.assignSelf)}
-                      style={{ flex: 1, padding: '12px 10px', minHeight: '44px', background: C.saffron, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {tab === 'active' && nextAction && (
+                    <button onClick={() => updateStatus(order.id, nextAction.next, nextAction.assignSelf)} disabled={busy}
+                      style={{ flex: 1, padding: '12px 10px', minHeight: '44px', background: busy ? C.stone : C.saffron, color: '#fff', border: 'none', borderRadius: '10px', fontSize: '12px', fontWeight: 700, cursor: busy ? 'wait' : 'pointer', fontFamily: 'DM Sans, sans-serif', letterSpacing: '0.3px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       {nextAction.label}
                     </button>
                   )}
