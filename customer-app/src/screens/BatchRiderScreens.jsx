@@ -65,6 +65,11 @@ function BatchRiderHome() {
     };
 
     fetchData();
+    // Realtime — new drops at partners appear without a refresh
+    const ch = supabase.channel('batch_rider_orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, fetchData)
+      .subscribe();
+    return () => supabase.removeChannel(ch);
   }, [user?.id]);
 
   const handleCollectedFromPartner = async (partnerId, partnerName) => {

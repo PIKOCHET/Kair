@@ -607,7 +607,7 @@ function OrdersView({ onBack }) {
             <div style={{ display:'flex', justifyContent:'center', marginBottom:'16px' }}>
               <Package size={56} strokeWidth={1.5} color={C.stone} opacity={0.5} />
             </div>
-            <p style={{ color:C.stone, fontSize:'14px', fontWeight:500 }}>No orders yet. Request your first pickup!</p>
+            <p style={{ color:C.stone, fontSize:'14px', fontWeight:500 }}>Your first pickup is one tap away ✨</p>
           </div>
         )}
         {orders.map(order => (
@@ -841,7 +841,7 @@ function AccountView({ onBack }) {
     const { error: e } = await supabase.from('addresses')
       .insert({ user_id:user.id, flat_no:flat, area, landmark, city:'Pune', is_default: addresses.length === 0 });
     setSaving(false);
-    if (e) { setError(e.message); return; }
+    if (e) { console.error('Add address:', e); setError('Could not save the address — please try again.'); return; }
     setFlat(''); setArea(''); setLandmark(''); setAddingNew(false);
     fetchAddresses();
   }

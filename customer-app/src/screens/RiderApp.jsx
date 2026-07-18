@@ -113,7 +113,7 @@ function ItemEntry({ order, onDone, onBack }) {
       });
 
       onDone();
-    } catch (e) { setError(e.message); }
+    } catch (e) { console.error('Item save:', e); setError('Could not save items — check your connection and try again.'); }
     finally { setSaving(false); }
   }
 
