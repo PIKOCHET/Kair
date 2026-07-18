@@ -85,10 +85,29 @@ function ItemEntry({ order, onDone, onBack }) {
       const { error: te } = await supabase.from('garment_tags').insert(tags);
       if (te) throw te;
 
-      // 3. Update order — total (minus discount), ETA, status
-      const finalTotal = Math.max(0, totalPaise - (order.discount_paise || 0));
+      // 3. Resolve the promo against the real item total.
+      // Percentage promos are stored as discount_paise = 1 at order time
+      // (a "calculate later" marker) because the total isn't known until now.
+      let discountPaise = order.discount_paise || 0;
+      if (order.promo_code) {
+        const { data: promo } = await supabase.from('promo_codes')
+          .select('discount_type, discount_value, max_discount_paise')
+          .eq('code', order.promo_code)
+          .eq('is_active', true)
+          .maybeSingle();
+        if (promo?.discount_type === 'percentage') {
+          discountPaise = Math.round(totalPaise * promo.discount_value / 100);
+          if (promo.max_discount_paise) discountPaise = Math.min(discountPaise, promo.max_discount_paise);
+        } else if (promo?.discount_type === 'fixed') {
+          discountPaise = Math.min(promo.discount_value, totalPaise);
+        }
+      }
+
+      // 4. Update order — total (minus discount), ETA, status
+      const finalTotal = Math.max(0, totalPaise - discountPaise);
       const { error: oe } = await supabase.from('orders').update({
         total_paise:        finalTotal,
+        discount_paise:     discountPaise,
         estimated_delivery: etaDate?.toISOString().split('T')[0],
         items_confirmed:    true,
         status:             'picked_up', // Keep as picked_up, will transition to at_channel_partner
@@ -100,8 +119,8 @@ function ItemEntry({ order, onDone, onBack }) {
 
       // 5. Notify customer with appropriate message based on assignment
       const notifMessage = assignedPartner
-        ? `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected: ${items.map(i => `${i.qty}× ${i.name}`).join(', ')} · Total ₹${(totalPaise / 100).toFixed(0)} · Safely at ${assignedPartner.name} · Est. delivery ${etaDate?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) || 'TBD'}`
-        : `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected · Total ₹${(totalPaise / 100).toFixed(0)}`;
+        ? `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected: ${items.map(i => `${i.qty}× ${i.name}`).join(', ')} · Total ₹${(finalTotal / 100).toFixed(0)} · Safely at ${assignedPartner.name} · Est. delivery ${etaDate?.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' }) || 'TBD'}`
+        : `${allItems.length} item${allItems.length > 1 ? 's' : ''} collected · Total ₹${(finalTotal / 100).toFixed(0)}`;
 
       await supabase.from('notifications').insert({
         user_id:  order.customer_id,
