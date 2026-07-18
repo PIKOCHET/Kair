@@ -19,7 +19,7 @@ function StatusBadge({ status }) {
 
 function ProgressBar({ status }) {
   const STEPS = ['Pickup','Cleaning','Ready','Delivered'];
-  const IDX = { pending_pickup:0, rider_assigned:0, picked_up:1, at_channel_partner:1, in_transit_to_workshop:1, in_cleaning:1, quality_check:2, ready:2, out_for_delivery:3, delivered:3 };
+  const IDX = { pending_pickup:0, rider_assigned:0, picked_up:1, at_channel_partner:1, in_transit_to_workshop:1, in_cleaning:1, quality_check:2, ready:2, dispatched_to_partner:2, out_for_delivery:3, delivered:3 };
   const si = IDX[status] ?? 0;
   const pct = Math.min((si/3)*100, 100);
   return (
@@ -42,7 +42,7 @@ function ProgressBar({ status }) {
 }
 
 // ── HOME ──────────────────────────────────────────────────
-function HomeView({ profile, onPickup, onViewOrders }) {
+function HomeView({ profile, onPickup, onViewOrders, onBell }) {
   const [activeOrders, setActiveOrders] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const { user } = useAuth();
@@ -84,7 +84,7 @@ function HomeView({ profile, onPickup, onViewOrders }) {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'12px' }}>
           <button style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'20px', display:'flex', alignItems:'center', justifyContent:'center' }}>☰</button>
           <div style={{ fontFamily:'Cormorant Garamond, serif', fontSize:'24px', color:'#fff', fontWeight:400, letterSpacing:'4px', textAlign:'center', flex:1 }}>KAIR</div>
-          <button style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'18px', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>🔔{unreadCount > 0 && <span style={{ position:'absolute', top:'-4px', right:'-4px', width:'18px', height:'18px', borderRadius:'50%', background:C.saffron, color:'#fff', fontSize:'10px', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'DM Sans, sans-serif' }}>{unreadCount}</span>}</button>
+          <button onClick={onBell} style={{ width:'36px', height:'36px', borderRadius:'8px', border:'none', background:'rgba(255,255,255,0.1)', color:'#fff', cursor:'pointer', fontSize:'18px', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>🔔{unreadCount > 0 && <span style={{ position:'absolute', top:'-4px', right:'-4px', width:'18px', height:'18px', borderRadius:'50%', background:C.saffron, color:'#fff', fontSize:'10px', fontWeight:700, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'DM Sans, sans-serif' }}>{unreadCount}</span>}</button>
         </div>
         <div style={{ fontSize:'9px', color:'rgba(255,255,255,0.6)', fontWeight:500, display:'flex', alignItems:'center', gap:'4px' }}>📍 CURRENT LOCATION</div>
       </div>
@@ -327,7 +327,7 @@ function ConfirmView({ pickupType, onConfirmed, onBack }) {
         .select().single();
       if (oe) throw oe;
       onConfirmed(order);
-    } catch (e) { setError(e.message); }
+    } catch (e) { console.error('Order create:', e); setError('We could not place your order. Please check your connection and try again.'); }
     finally { setLoading(false); }
   }
 
@@ -553,7 +553,7 @@ function OrdersView({ onBack }) {
       .update({ status: 'cancelled' })
       .eq('id', orderId)
       .eq('customer_id', user.id);
-    if (error) { showToast('Error: ' + error.message); return; }
+    if (error) { console.error('Cancel order:', error); showToast('Could not cancel — please try again'); return; }
     showToast('Order cancelled');
     fetchOrders();
   }
@@ -583,8 +583,8 @@ function OrdersView({ onBack }) {
     const { error } = await supabase.from('order_ratings')
       .insert({ order_id:orderId, customer_id:user.id, rating:ratingValue, feedback:ratingFeedback||null });
     setSubmittingRating(false);
-    if (error) { showToast('Error: ' + error.message); return; }
-    showToast('Thank you for your feedback!');
+    if (error) { console.error('Rating:', error); showToast('Could not save rating — please try again'); return; }
+    showToast('Thank you for choosing Kair ✨');
     setRatingOrder(null);
     setRatingValue(0);
     setRatingFeedback('');
@@ -645,6 +645,26 @@ function OrdersView({ onBack }) {
                     <span style={{ color:C.saffron, fontWeight:700 }}>{fmt.rupees(item.price_paise * item.quantity)}</span>
                   </div>
                 ))}
+                {order.discount_paise > 1 && order.total_paise > 0 && (
+                  <div style={{ borderTop:`1px dashed ${C.linen}`, paddingTop:'6px', marginTop:'4px' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px', color:C.stone }}>
+                      <span>Subtotal</span><span>{fmt.rupees(order.total_paise + order.discount_paise)}</span>
+                    </div>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'11px', color:C.success, fontWeight:700 }}>
+                      <span>Promo{order.promo_code ? ` (${order.promo_code})` : ''}</span><span>−{fmt.rupees(order.discount_paise)}</span>
+                    </div>
+                    <div style={{ display:'flex', justifyContent:'space-between', fontSize:'12px', color:C.navy, fontWeight:700, marginTop:'2px' }}>
+                      <span>You pay</span><span style={{ fontFamily:'DM Sans, sans-serif' }}>{fmt.rupees(order.total_paise)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Special instructions echoed back */}
+            {order.special_notes && (
+              <div style={{ marginTop:'10px', fontSize:'11px', color:C.stone, background:C.linen, padding:'8px 12px', borderRadius:'8px', lineHeight:1.5 }}>
+                📝 <strong style={{ color:C.navy }}>Your instructions:</strong> {order.special_notes}
               </div>
             )}
 
@@ -942,6 +962,73 @@ function AccountView({ onBack }) {
   );
 }
 
+// ── NOTIFICATIONS ─────────────────────────────────────────
+function NotificationsView({ onBack }) {
+  const { user } = useAuth();
+  const [notifs, setNotifs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('notifications')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(50)
+      .then(({ data, error }) => {
+        if (error) console.error('Notifications fetch:', error);
+        setNotifs(data || []);
+        setLoading(false);
+        // Mark all as read — badge count resets on return to home
+        supabase.from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false)
+          .then(() => {});
+      });
+  }, [user]);
+
+  const timeAgo = (dateStr) => {
+    const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  };
+
+  return (
+    <div style={{ background:C.cream, minHeight:'100vh', paddingBottom:'70px' }}>
+      <div style={{ background:'#fff', padding:'12px 16px', display:'flex', alignItems:'center', gap:'10px', borderBottom:`1px solid ${C.border}`, position:'sticky', top:0, zIndex:10 }}>
+        <button onClick={onBack} style={{ width:'36px', height:'36px', borderRadius:'50%', border:`1px solid ${C.border}`, background:'#fff', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <ChevronLeft size={20} strokeWidth={2.5} color={C.navy} />
+        </button>
+        <span style={{ fontSize:'15px', fontWeight:700, color:C.navy }}>Notifications</span>
+      </div>
+
+      <div style={{ padding:'14px 16px' }}>
+        {loading && <div style={{ textAlign:'center', padding:'60px', color:C.stone }}>Loading...</div>}
+        {!loading && notifs.length === 0 && (
+          <div style={{ textAlign:'center', padding:'60px 20px' }}>
+            <div style={{ fontSize:'40px', marginBottom:'12px' }}>🔔</div>
+            <p style={{ color:C.stone, fontSize:'14px', fontWeight:500 }}>You're all caught up ✨</p>
+          </div>
+        )}
+        {notifs.map(n => (
+          <div key={n.id} style={{ background:'#fff', borderRadius:'14px', border:`1px solid ${n.is_read ? C.border : C.saffron}`, padding:'14px 16px', marginBottom:'10px', boxShadow:'0 2px 8px rgba(0,0,0,0.04)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:'10px' }}>
+              <div style={{ fontSize:'13px', fontWeight:700, color:C.navy }}>{n.title}</div>
+              <div style={{ fontSize:'10px', color:C.stone, whiteSpace:'nowrap', flexShrink:0 }}>{timeAgo(n.created_at)}</div>
+            </div>
+            <div style={{ fontSize:'12px', color:C.stone, marginTop:'4px', lineHeight:1.5 }}>{n.message}</div>
+            {!n.is_read && <span style={{ display:'inline-block', marginTop:'8px', fontSize:'9px', fontWeight:700, color:C.saffron, background:C.saffronLight, padding:'2px 8px', borderRadius:'8px' }}>NEW</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ── CUSTOMER APP (root view with tabs) ────────────────────
 export default function CustomerApp() {
   const { profile } = useAuth();
@@ -953,10 +1040,11 @@ export default function CustomerApp() {
   if (view === 'confirmed') return <ConfirmedView order={confirmedOrder} onTrack={() => setView('orders')} />;
   if (view === 'orders') return <OrdersView onBack={() => setView('home')} />;
   if (view === 'account') return <AccountView onBack={() => setView('home')} />;
+  if (view === 'notifications') return <NotificationsView onBack={() => setView('home')} />;
 
   return (
     <div style={{ position:'relative' }}>
-      <HomeView profile={profile} onPickup={type => { setPickupType(type); setView('confirm'); }} onViewOrders={() => setView('orders')} />
+      <HomeView profile={profile} onPickup={type => { setPickupType(type); setView('confirm'); }} onViewOrders={() => setView('orders')} onBell={() => setView('notifications')} />
       {/* Bottom nav */}
       <div style={{ position:'fixed', bottom:0, left:0, right:0, background:C.cream, borderTop:`1px solid ${C.border}`, display:'flex', zIndex:100, boxShadow:'0 -4px 16px rgba(0,0,0,0.06)', maxWidth:'480px', margin:'0 auto', height:'70px' }}>
         {[

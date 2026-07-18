@@ -21,18 +21,18 @@ export const C = {
 };
 
 export const STATUS_CONFIG = {
-  pending_pickup:        { label:'Awaiting pickup',      color:C.saffron, bg:C.saffronLight },
-  rider_assigned:        { label:'Rider assigned',       color:C.info,    bg:C.infoBg },
-  picked_up:             { label:'Picked up ✓',          color:C.info,    bg:C.infoBg },
-  at_channel_partner:    { label:'At collection centre', color:'#0D7377', bg:C.tealLight,    icon:'🏪', desc:'Safely stored at our local collection point' }, // ⭐ NEW
-  in_transit_to_workshop:{ label:'Heading to workshop',  color:'#D97706', bg:C.saffronLight, icon:'🚐', desc:'Batch rider collecting for workshop' }, // ⭐ NEW
-  in_cleaning:           { label:'In cleaning',          color:C.info,    bg:C.infoBg },
-  quality_check:         { label:'Quality check',        color:C.success, bg:C.successBg },
-  ready:                 { label:'Ready ✨',              color:C.success, bg:C.successBg },
-  dispatched_to_partner: { label:'Dispatched to partner', color:C.teal,    bg:C.tealLight }, // ⭐ NEW
-  out_for_delivery:      { label:'Out for delivery',     color:C.saffron, bg:C.saffronLight },
-  delivered:             { label:'Delivered ✓',          color:C.stone,   bg:C.linen },
-  cancelled:             { label:'Cancelled',             color:C.danger,  bg:C.dangerBg },
+  pending_pickup:        { label:'Finding your rider',   color:C.saffron, bg:C.saffronLight, icon:'🔍', desc:'Matching you with the nearest Kair rider' },
+  rider_assigned:        { label:'Rider on the way',     color:C.info,    bg:C.infoBg,       icon:'🏍️', desc:'Your rider is heading to your door' },
+  picked_up:             { label:'Picked up',            color:C.info,    bg:C.infoBg,       icon:'✅', desc:'Your garments are in safe hands' },
+  at_channel_partner:    { label:'At collection centre', color:'#0D7377', bg:C.tealLight,    icon:'🏪', desc:'Safely stored at our local collection point' },
+  in_transit_to_workshop:{ label:'Heading to workshop',  color:'#D97706', bg:C.saffronLight, icon:'🚐', desc:'On the way to our facility for overnight care' },
+  in_cleaning:           { label:'Being cleaned',        color:C.info,    bg:C.infoBg,       icon:'🧺', desc:'Professional cleaning in progress' },
+  quality_check:         { label:'Quality inspection',   color:C.success, bg:C.successBg,    icon:'🔍', desc:'Final checks before packing' },
+  ready:                 { label:'Ready for delivery',   color:C.success, bg:C.successBg,    icon:'✨', desc:'Cleaned, pressed and packed' },
+  dispatched_to_partner: { label:'Coming back to you',   color:C.teal,    bg:C.tealLight,    icon:'📦', desc:'On the return route to your area' },
+  out_for_delivery:      { label:'Out for delivery',     color:C.saffron, bg:C.saffronLight, icon:'🚀', desc:'Rider on the way with your clothes' },
+  delivered:             { label:'Delivered',            color:C.success, bg:C.successBg,    icon:'🎉', desc:'Your clothes are home' },
+  cancelled:             { label:'Cancelled',            color:C.danger,  bg:C.dangerBg,     icon:'❌', desc:'This order was cancelled' },
 };
 
 export const TAG_STATUSES = ['received','sorting','in_cleaning','drying','pressed','quality_check','ready','packed'];
