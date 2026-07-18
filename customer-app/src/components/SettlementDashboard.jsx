@@ -11,18 +11,27 @@ import { C, fmt } from '../lib/constants';
 export default function SettlementDashboard() {
   const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState('');
   const [filter, setFilter] = useState('pending');
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+
+  function showToast(msg) { setToast(msg); setTimeout(() => setToast(''), 3000); }
 
   useEffect(() => {
     fetchSettlements();
   }, [selectedMonth, filter]);
 
+  // First day of the month AFTER selectedMonth — for created_at < end
+  function monthEnd(month) {
+    const [y, m] = month.split('-').map(Number);
+    return m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, '0')}-01`;
+  }
+
   async function fetchSettlements() {
     setLoading(true);
     try {
-      // Get all partners with their orders and commission data
-      const { data: partners } = await supabase
+      const { data: partners, error } = await supabase
         .from('channel_partners')
         .select(`
           *,
@@ -30,19 +39,24 @@ export default function SettlementDashboard() {
           transactions:partner_transactions(*)
         `)
         .eq('is_active', true);
+      if (error) { console.error('Settlements fetch:', error); return; }
 
       if (partners) {
-        // Calculate settlements for the selected month
         const settlementData = partners.map(partner => {
-          // Filter transactions for selected month
+          // Commission-bearing transactions for the selected month
           const monthTransactions = (partner.transactions || []).filter(t => {
             const tMonth = new Date(t.created_at).toISOString().slice(0, 7);
-            return tMonth === selectedMonth;
+            return tMonth === selectedMonth && t.type === 'received';
           });
 
           const totalCommission = monthTransactions.reduce((sum, t) => sum + (t.commission_paise || 0), 0);
+          const pendingCommission = monthTransactions.filter(t => !t.settled_at).reduce((sum, t) => sum + (t.commission_paise || 0), 0);
           const orderCount = monthTransactions.length;
-          const status = 'pending'; // Default to pending - can be updated in DB
+          // Settled = every commission row for this month carries settled_at
+          const status = orderCount === 0 ? 'pending' : (pendingCommission > 0 ? 'pending' : 'settled');
+          const settledAt = monthTransactions.length > 0 && pendingCommission === 0
+            ? new Date(Math.max(...monthTransactions.map(t => new Date(t.settled_at))))
+            : null;
 
           return {
             id: partner.id,
@@ -51,9 +65,11 @@ export default function SettlementDashboard() {
             area: partner.area,
             contact: partner.profile?.phone || 'N/A',
             totalCommission,
+            pendingCommission,
             orderCount,
             commissionPerOrder: partner.commission_paise,
             status,
+            settledAt,
             createdAt: partner.created_at,
             lastOrderAt: monthTransactions.length > 0
               ? new Date(Math.max(...monthTransactions.map(t => new Date(t.created_at))))
@@ -61,7 +77,6 @@ export default function SettlementDashboard() {
           };
         });
 
-        // Filter by status
         const filtered = filter === 'all'
           ? settlementData
           : settlementData.filter(s => s.status === filter);
@@ -75,18 +90,50 @@ export default function SettlementDashboard() {
     }
   }
 
-  async function markAsSettled(partnerId) {
+  // Stamps settled_at on every unsettled commission row for this partner in the period
+  async function markAsSettled(partnerId, partnerName) {
+    if (busy) return;
+    setBusy(true);
     try {
-      // In a real system, create a settlement record
-      // For now, we'll just show a toast
-      alert(`✓ Settlement marked for ${partnerId}`);
+      const { error } = await supabase
+        .from('partner_transactions')
+        .update({ settled_at: new Date().toISOString() })
+        .eq('channel_partner_id', partnerId)
+        .eq('type', 'received')
+        .is('settled_at', null)
+        .gte('created_at', `${selectedMonth}-01`)
+        .lt('created_at', monthEnd(selectedMonth));
+      if (error) { console.error('Mark settled:', error); showToast('Could not settle — try again'); return; }
+      showToast(`✓ ${partnerName} settled for ${selectedMonth}`);
       fetchSettlements();
-    } catch (error) {
-      console.error('Error marking settlement:', error);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function processAllPayouts() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      for (const s of settlements.filter(s => s.status === 'pending' && s.pendingCommission > 0)) {
+        await supabase
+          .from('partner_transactions')
+          .update({ settled_at: new Date().toISOString() })
+          .eq('channel_partner_id', s.partner_id)
+          .eq('type', 'received')
+          .is('settled_at', null)
+          .gte('created_at', `${selectedMonth}-01`)
+          .lt('created_at', monthEnd(selectedMonth));
+      }
+      showToast('✓ All pending payouts settled');
+      fetchSettlements();
+    } finally {
+      setBusy(false);
     }
   }
 
   const totalCommission = settlements.reduce((sum, s) => sum + s.totalCommission, 0);
+  const totalPending = settlements.reduce((sum, s) => sum + (s.pendingCommission || 0), 0);
   const totalOrders = settlements.reduce((sum, s) => sum + s.orderCount, 0);
   const avgPerOrder = totalOrders > 0 ? totalCommission / totalOrders : 0;
 
@@ -200,22 +247,31 @@ export default function SettlementDashboard() {
                     {fmt.rupees(settlement.totalCommission)}
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button
-                      onClick={() => markAsSettled(settlement.partner_id)}
-                      style={{
-                        padding: '6px 12px',
-                        background: C.success,
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontFamily: 'DM Sans, sans-serif'
-                      }}
-                    >
-                      Mark Settled
-                    </button>
+                    {settlement.status === 'settled' ? (
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: C.success, background: C.successBg, padding: '5px 10px', borderRadius: '6px' }}>
+                        ✓ Settled{settlement.settledAt ? ` · ${settlement.settledAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}` : ''}
+                      </span>
+                    ) : settlement.pendingCommission > 0 ? (
+                      <button
+                        onClick={() => markAsSettled(settlement.partner_id, settlement.name)}
+                        disabled={busy}
+                        style={{
+                          padding: '6px 12px',
+                          background: busy ? C.stone : C.success,
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          cursor: busy ? 'wait' : 'pointer',
+                          fontFamily: 'DM Sans, sans-serif'
+                        }}
+                      >
+                        Mark Settled
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: '10px', color: C.stone }}>—</span>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -240,25 +296,33 @@ export default function SettlementDashboard() {
             <div style={{ fontSize: '11px', color: C.teal, fontWeight: 600 }}>
               Total Settlement Due
             </div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: C.teal, marginTop: '4px' }}>
-              {fmt.rupees(totalCommission)}
+            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: '20px', fontWeight: 700, color: C.teal, marginTop: '4px' }}>
+              {fmt.rupees(totalPending)}
             </div>
           </div>
           <button
+            onClick={processAllPayouts}
+            disabled={busy}
             style={{
               padding: '10px 16px',
-              background: C.teal,
+              background: busy ? C.stone : C.teal,
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: busy ? 'wait' : 'pointer',
               fontFamily: 'DM Sans, sans-serif'
             }}
           >
-            Process Payout
+            {busy ? 'Processing...' : 'Process Payout'}
           </button>
+        </div>
+      )}
+
+      {toast && (
+        <div style={{ position: 'fixed', bottom: '24px', left: '50%', transform: 'translateX(-50%)', background: C.navy, color: '#fff', padding: '10px 20px', borderRadius: '10px', fontSize: '13px', fontWeight: 500, zIndex: 300, whiteSpace: 'nowrap' }}>
+          {toast}
         </div>
       )}
     </div>
